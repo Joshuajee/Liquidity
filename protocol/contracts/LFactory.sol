@@ -11,7 +11,8 @@ import "hardhat/console.sol";
 
 contract LFactory {
 
-    error PairAlreadyExist();
+    error PairAlreadyExist(address pair);
+    error PoolAlreadyExist(address pool);
 
     using Clones for address;
     using SafeERC20 for IERC20;
@@ -38,7 +39,7 @@ contract LFactory {
 
         pair = address(LSwapPair(PAIR_REFERENCE.cloneDeterministic(salt)));
 
-        if (pairs[token0][token1] != address(0)) revert PairAlreadyExist();
+        if (pairs[token0][token1] != address(0)) revert PairAlreadyExist(pairs[token0][token1]);
         
         pairs[token0][token1] = pair;
 
@@ -57,6 +58,8 @@ contract LFactory {
         _token.approve(pool, assets);
 
         LCollateralPool(pool).deposit(assets, receiver);
+
+        if (collateralPools[address(_token)] != address(0)) revert PoolAlreadyExist(collateralPools[address(_token)]);
 
         collateralPools[address(_token)] = pool;
 

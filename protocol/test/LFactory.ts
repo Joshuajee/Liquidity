@@ -22,6 +22,26 @@ describe("LFactory", function () {
 
   }
 
+  async function deployAndCreateCollateralPool() {
+
+    const data = await loadFixture(deploy);
+
+    const { LFactory, MockERC20, account1 } = data
+
+    const deposit = parseEther("10", "wei")
+
+    await MockERC20.write.approve([LFactory.address, deposit])
+
+    expect(await LFactory.read.getCollateralPool([MockERC20.address])).to.be.equal(zeroAddress)
+
+    await LFactory.write.createCollateralPool([MockERC20.address, deposit, account1.account.address])
+
+    expect(await LFactory.read.getCollateralPool([MockERC20.address])).to.not.be.equal(zeroAddress)
+    
+    return {...data }
+
+  }
+
   describe("Deployment", function () {
 
     it("Should set the right LSwapPairAddress", async function () {
@@ -57,19 +77,16 @@ describe("LFactory", function () {
 
     it("Should Revert if Pool Already Exist", async function () {
 
-      const { LFactory, MockERC20, account1 } = await loadFixture(deploy);
+      const { LFactory, MockERC20, account1 } = await loadFixture(deployAndCreateCollateralPool);
 
       const deposit = parseEther("10", "wei")
 
       await MockERC20.write.approve([LFactory.address, deposit])
 
-      expect(await LFactory.read.getCollateralPool([MockERC20.address])).to.be.equal(zeroAddress)
+      await expect(
+        LFactory.write.createCollateralPool([MockERC20.address, deposit, account1.account.address])
+      ).to.be.rejectedWith("PoolAlreadyExist")
 
-      await LFactory.write.createCollateralPool([MockERC20.address, deposit, account1.account.address])
-
-      expect(await LFactory.read.getCollateralPool([MockERC20.address])).to.not.be.equal(zeroAddress)
-
-      //expect(await MockERC20.read.balanceOf([]))
     });
 
 
