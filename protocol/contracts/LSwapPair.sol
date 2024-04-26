@@ -16,7 +16,7 @@ import {LSwapERC20} from "./utils/LSwapERC20.sol";
  * @title LSwapPair V1 Pair
  * @notice Main contract for LSwapPair V1 and should be called from contract with safety checks.
  * @dev This contract is a pair of two tokens that are traded against each other.
- *  The pair is deployed by the factory contract.
+ *  The pair is deployed by the FACTORY contract.
  * Mint, Burn, Swap, and Takeover are handled in this contract.
  * @author LSwapPair -- Joshua Evuetapha
  */
@@ -31,12 +31,8 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
-    uint32 private constant _MIN_LOCK_PERIOD = 2 days;
-    uint32 public constant VESTING_PERIOD = 7 days;
-    uint32 private constant _MAX_UINT32 = type(uint32).max;
-    uint32 private constant _THIRTY_DAYS = 30 days;
 
-    address public immutable factory;
+    address public FACTORY;
 
     //reserves
     uint private _reserve0;
@@ -61,13 +57,11 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     event Burn(address, uint256, uint256, address);
     event Swap(address, uint256, uint256, uint256, uint256, address);
 
-    constructor() {factory = msg.sender; }
 
     /* ----------------------------- EXTERNAL FUNCTIONS ----------------------------- */
-    function initialize(address token0, address token1, string memory baseName)
-        external
-    {
-        if (msg.sender != factory) revert Forbidden();
+    function initialize(address token0, address token1) external {
+
+        FACTORY = msg.sender;
 
         _token0 = token0;
         _token1 = token1;
@@ -108,20 +102,25 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
         // at this point in time we will get the actual reserves
         (uint256 reserveToken0, uint256 reserveToken1) = getReserves();
 
-        uint amountToken0 = balanceToken0 - reserveToken0 - _pendingLiquidityFees - _pendingProtocolFees;
-        uint amountToken1 = balanceToken1 - reserveToken1;
+        uint fees = _pendingLiquidityFees - _pendingProtocolFees;
 
-        liquidity = Math.min((amountToken0 * totalSupply_) / reserveToken0, (amountToken1 * totalSupply_) / reserveToken1);
+        uint amountToken0 = balanceToken0 - reserveToken0 - fees;
+        uint amountToken1 = balanceToken1 - reserveToken1 - fees;
 
         _updateFeeRewards(to);
 
         if (totalSupply_ == 0) {
             _mint(address(0), MINIMUM_LIQUIDITY);
+            amountToken0 += 1;
+            amountToken1 += 1;
+            liquidity = Math.sqrt(amountToken0 * amountToken1) - MINIMUM_LIQUIDITY;
+        } else {
+            liquidity = Math.min((amountToken0 * totalSupply_) / reserveToken0, (amountToken1 * totalSupply_) / reserveToken1);
         }
 
         _mint(to, liquidity);
 
-        //_update(balanceEth, balanceToken, true);
+        _update(amountToken0, amountToken1, true);
 
         //emit Mint(msg.sender, amountWeth, amountToken);
     }
@@ -280,9 +279,11 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
 
     /// @notice returns real reserves 
-    function getReserves() public view returns (uint token0, uint token1) {
-       
+    function getReserves() public view returns (uint reserve0, uint reserve1) {
+       reserve0 = _reserve0 > 0 ? _reserve0 : 1;
+       reserve1 = _reserve1 > 0 ? _reserve1 : 1;
     }
+
     /**
      * @notice Withdraws the fees accrued to the address `to`.
      * @dev Transfers the accumulated fees in weth of the liquidty proivder
@@ -310,14 +311,15 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     /**
      * @notice Updates the reserve amounts.
      */
-    function _update(uint256 balanceEth, uint256 balanceToken, bool deductFees) internal {
-        // Update token reserves and other necessary data
-        // if (deductFees) {
-        //     _reserveEth = uint112(balanceEth - (_pendingLiquidityFees + _pendingProtocolFees));
-        // } else {
-        //     _reserveEth = uint112(balanceEth);
-        // }
-        // _reserveToken = uint112(balanceToken);
+    function _update(uint256 amountInToken0, uint256 amountInToken1, bool deductFees) internal {
+        //Update token reserves and other necessary data
+        if (deductFees) {
+            _reserve0 += amountInToken0 - (_pendingLiquidityFees + _pendingProtocolFees);
+            _reserve1 += amountInToken1 - (_pendingLiquidityFees + _pendingProtocolFees);
+        } else {
+            _reserve0 += amountInToken0;
+            _reserve1 += amountInToken1;
+        }
     }
     /**
      * @dev Calculates and handles the distribution of fees for each swap transaction.
@@ -352,11 +354,11 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
         // pendingProtocolFees += feesCollected - feesLp;
 
-        // ILFactory _factory = ILFactory(factory);
-        // uint256 minCollectableFees = _factory.minimumCollectableFees();
+        // ILFACTORY _FACTORY = ILFACTORY(FACTORY);
+        // uint256 minCollectableFees = _FACTORY.minimumCollectableFees();
 
         // if (pendingProtocolFees > minCollectableFees) {
-        //     IERC20(_weth).safeTransfer(_factory.treasury(), pendingProtocolFees);
+        //     IERC20(_weth).safeTransfer(_FACTORY.treasury(), pendingProtocolFees);
         //     pendingProtocolFees = 0;
         // }
         //_pendingProtocolFees = pendingProtocolFees;
@@ -409,5 +411,9 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
     function getPendingProtocolFees() external view returns (uint) {
         return _pendingProtocolFees;
+    }
+
+    function getFACTORY() external view returns (address) {
+        return FACTORY;
     }
 }

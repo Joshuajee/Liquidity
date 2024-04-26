@@ -26,7 +26,6 @@ contract LFactory {
         PAIR_REFERENCE = swapPool;
     }
 
-
     function createPair(address _token0, address _token1) external returns (address pair) {
 
         bytes32 salt;
@@ -38,6 +37,8 @@ contract LFactory {
         }
 
         pair = address(LSwapPair(PAIR_REFERENCE.cloneDeterministic(salt)));
+
+        LSwapPair(pair).initialize(token0, token1);
 
         if (pairs[token0][token1] != address(0)) revert PairAlreadyExist(pairs[token0][token1]);
         

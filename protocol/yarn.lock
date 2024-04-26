@@ -1189,6 +1189,11 @@ bech32@1.1.4:
   resolved "https://registry.yarnpkg.com/bech32/-/bech32-1.1.4.tgz#e38c9f37bf179b8eb16ae3a772b40c356d4832e9"
   integrity sha512-s0IrSOzLlbvX7yp4WBfPITzpAU8sqQcpsmwXDiKwrG4r491vwCO/XpejasRNl0piBMe/DvP4Tz0mIS/X1DPJBQ==
 
+bigint-isqrt@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/bigint-isqrt/-/bigint-isqrt-0.3.2.tgz#c5a9a13e7291021509198c263be3d2e6d0f03110"
+  integrity sha512-hfd7Ka2XKmBIAQWWDrDHTCkGsSfZMFjgcB3eCnDtZHsDiszSk+CQvnq16nGYIKuDMBvnSAvjnihoumJDpMnv7A==
+
 binary-extensions@^2.0.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-2.3.0.tgz#f6e14a97858d327252200242d4ccfe522c445522"

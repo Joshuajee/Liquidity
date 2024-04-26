@@ -12,13 +12,15 @@ describe("LFactory", function () {
 
     const MockERC20 = await hre.viem.deployContract("MockERC20", ["TUSD", "TUSD"])
 
+    const MockERC20_1 = await hre.viem.deployContract("MockERC20", ["TGBP", "TGBP"])
+
     const LSwapPair = await hre.viem.deployContract("LSwapPair")
 
     const LFactory = await hre.viem.deployContract("LFactory", [LSwapPair.address])
 
     const publicClient = await hre.viem.getPublicClient();
 
-    return {  LFactory, LSwapPair,  MockERC20,  account1,  otherAccount, publicClient, };
+    return {  LFactory, LSwapPair,  MockERC20, MockERC20_1, account1,  otherAccount, publicClient, };
 
   }
 
@@ -74,7 +76,6 @@ describe("LFactory", function () {
       //expect(await MockERC20.read.balanceOf([]))
     });
 
-
     it("Should Revert if Pool Already Exist", async function () {
 
       const { LFactory, MockERC20, account1 } = await loadFixture(deployAndCreateCollateralPool);
@@ -89,25 +90,43 @@ describe("LFactory", function () {
 
     });
 
+  });
+
+
+  describe("Create LSwapPair Pool - Success", function () {
+
+    it("Should Create new Pair", async function () {
+
+      const { LFactory, MockERC20, MockERC20_1 } = await loadFixture(deploy);
+
+      expect(await LFactory.read.getPool([MockERC20.address, MockERC20_1.address])).to.be.equal(zeroAddress)
+
+      await LFactory.write.createPair([MockERC20.address, MockERC20_1.address])
+
+      expect(await LFactory.read.getPool([MockERC20.address, MockERC20_1.address])).to.not.be.equal(zeroAddress)
+
+
+    });
+
+
+    it("Should Create new Pair", async function () {
+
+      const { LFactory, MockERC20, MockERC20_1 } = await loadFixture(deploy);
+
+      expect(await LFactory.read.getPool([MockERC20.address, MockERC20_1.address])).to.be.equal(zeroAddress)
+
+      await LFactory.write.createPair([MockERC20.address, MockERC20_1.address])
+
+      expect(await LFactory.read.getPool([MockERC20.address, MockERC20_1.address])).to.not.be.equal(zeroAddress)
+
+
+    });
+
+
+    
+
 
   });
 
  
-  //   describe("Events", function () {
-  //     it("Should emit an event on withdrawals", async function () {
-  //       const { lock, unlockTime, lockedAmount, publicClient } =
-  //         await loadFixture(deployOneYearLockFixture);
-
-  //       await time.increaseTo(unlockTime);
-
-  //       const hash = await lock.write.withdraw();
-  //       await publicClient.waitForTransactionReceipt({ hash });
-
-  //       // get the withdrawal events in the latest block
-  //       const withdrawalEvents = await lock.getEvents.Withdrawal();
-  //       expect(withdrawalEvents).to.have.lengthOf(1);
-  //       expect(withdrawalEvents[0].args.amount).to.equal(lockedAmount);
-  //     });
-  //   });
-  // });
 });
