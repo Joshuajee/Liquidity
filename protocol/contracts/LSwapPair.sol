@@ -12,6 +12,8 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ILFactory} from "./interfaces/ILFactory.sol";
 import {LSwapERC20} from "./utils/LSwapERC20.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title LSwapPair V1 Pair
  * @notice Main contract for LSwapPair V1 and should be called from contract with safety checks.
@@ -27,6 +29,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     error MultipleOutputAmounts();
     error Forbidden();
     error InsufficientLiquidityBurned();
+    error KInvariant();
     
     using SafeERC20 for IERC20;
 
@@ -120,9 +123,9 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
         _mint(to, liquidity);
 
-        _update(amountToken0, amountToken1, true);
+        _update(amountToken0, amountToken1, 0, 0, true);
 
-        //emit Mint(msg.sender, amountWeth, amountToken);
+        emit Mint(msg.sender, amountToken0, amountToken1);
     }
 
     /**
@@ -165,7 +168,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
         uint256 balanceToken0 = IERC20(_token0).balanceOf(address(this));
         uint256 balanceToken1 = IERC20(_token1).balanceOf(address(this));
 
-        _update(balanceToken0, balanceToken1, true);
+        _update(balanceToken0, balanceToken1, 0, 0, true);
 
         emit Burn(msg.sender, amountToken0, amountToken1, to);
     }
@@ -190,76 +193,71 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
      * Security:
      * - Uses `nonReentrant` modifier to prevent reentrancy attacks.
      */
-    function swap(uint256 amountToken0Out, uint256 amountToken1Out, address to) external nonReentrant returns (uint amountToken0In, uint amountToken1In) {
+    function swap(uint256 amountToken0Out, uint256 amountToken1Out, address to) external nonReentrant returns (uint amountInToken0, uint amountInToken1) {
         
+        uint feesCollected; 
+        uint lpFeesCollected;
+
         uint initialBalanceToken0 = IERC20(_token0).balanceOf(address(this));
         uint initialBalanceToken1 = IERC20(_token1).balanceOf(address(this));
 
-        if (amountToken0Out == 0 && amountToken1Out == 0) {
-            revert InsufficientOutputAmount();
+        {
+
+            if (amountToken0Out == 0 && amountToken1Out == 0) {
+                revert InsufficientOutputAmount();
+            }
+
+            // if (amountToken0Out != 0 && amountToken1Out != 0) {
+            //     revert MultipleOutputAmounts();
+            // }
+            
+            (uint initialReserve0, uint initialReserve1) = getReserves();
+
+            if (amountToken0Out > initialReserve0 || amountToken1Out > initialReserve1) {
+                revert InsufficientAmountOut();
+            }
+
+            if (amountToken0Out > 0) {
+
+                amountInToken1 = IERC20(_token1).balanceOf(address(this)) - initialBalanceToken0 - _pendingLiquidityFees - _pendingProtocolFees;
+                
+                // optimistically send tokens out
+                IERC20(_token0).safeTransfer(to, amountToken0Out);
+
+                //(feesCollected, lpFeesCollected) = _handleFees(amountInToken1, amountToken0Out);
+                
+                amountInToken1 -= feesCollected;
+
+            } 
+            
+            if (amountToken1Out > 0) {
+
+                amountInToken0 = IERC20(_token0).balanceOf(address(this)) - initialBalanceToken0;
+
+                // optimistically send tokens out
+                IERC20(_token1).safeTransfer(to, amountToken1Out);
+
+               //(feesCollected, lpFeesCollected) = _handleFees(amountInToken1, amountToken1Out);
+
+                amountInToken0 -= feesCollected;
+                
+            
+            }
+
+            // update reserves
+            _update(amountInToken0, amountInToken1, amountToken0Out, amountToken1Out, false);
+
+            //check for K
+            if (initialReserve0 * initialReserve1 > _reserve0 * _reserve1) {
+                revert KInvariant();
+            }
+
+            console.log("KI", initialReserve0 * initialReserve1, initialReserve0, initialReserve1);
+            console.log("KF", _reserve0 * _reserve1, _reserve0, _reserve1);
+            
         }
 
-        if (amountToken0Out != 0 && amountToken1Out != 0) {
-            revert MultipleOutputAmounts();
-        }
-        
-        (uint reserve0, uint reserve1) = _getActualReserves();
-
-        if (amountToken0Out > reserve0 || amountToken1Out > reserve1) {
-            revert InsufficientAmountOut();
-        }
-
-        if (amountToken0Out > 0) {
-            amountToken1In = IERC20(_token1).balanceOf(address(this)) - initialBalanceToken0
-                - _pendingLiquidityFees - _pendingProtocolFees;
-            // optimistically send tokens out
-            IERC20(_token0).safeTransfer(to, amountToken0Out);
-        } else {
-            amountToken0In = IERC20(_token0).balanceOf(address(this)) - initialBalanceToken1;
-            // optimistically send weth out
-            IERC20(_token1).safeTransfer(to, amountToken1Out);
-        }
-
-        //(uint feesCollected, uint lpFeesCollected) = _handleFees(amountIn, amountWethOut);
-
-        // if (swapVars.isBuy) {
-        //     swapVars.amountWethIn -= swapVars.feesCollected;
-        // } else {
-        //     unchecked {
-        //         amountWethOut += swapVars.feesCollected;
-        //     }
-        // }
-        // swapVars.finalReserveEth = swapVars.isBuy
-        //     ? swapVars.initialReserveEth + swapVars.amountWethIn
-        //     : swapVars.initialReserveEth - amountWethOut;
-        // swapVars.finalReserveToken = swapVars.isBuy
-        //     ? swapVars.initialReserveToken - amountTokenOut
-        //     : swapVars.initialReserveToken + swapVars.amountTokenIn;
-
-
-        //     // check for K
-
-        //     (swapVars.virtualEthReserveBefore, swapVars.virtualTokenReserveBefore) =
-        //         _getReserves(swapVars.vestingUntil, swapVars.initialReserveEth, swapVars.initialReserveToken);
-        //     (swapVars.virtualEthReserveAfter, swapVars.virtualTokenReserveAfter) =
-        //         _getReserves(swapVars.vestingUntil, swapVars.finalReserveEth, swapVars.finalReserveToken);
-        //     if (
-        //         swapVars.virtualEthReserveBefore * swapVars.virtualTokenReserveBefore
-        //             > swapVars.virtualEthReserveAfter * swapVars.virtualTokenReserveAfter
-        //     ) {
-        //         revert KInvariant();
-        //     }
-
-        // _update(swapVars.finalReserveEth, swapVars.finalReserveToken, false);
-
-        // emit Swap(
-        //     msg.sender,
-        //     swapVars.amountWethIn + swapVars.feesCollected,
-        //     swapVars.amountTokenIn,
-        //     amountWethOut,
-        //     amountTokenOut,
-        //     to
-        // );
+        emit Swap(msg.sender, amountInToken0, amountInToken1, amountToken0Out, amountToken1Out, to);
     }
 
     /**
@@ -311,7 +309,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     /**
      * @notice Updates the reserve amounts.
      */
-    function _update(uint256 amountInToken0, uint256 amountInToken1, bool deductFees) internal {
+    function _update(uint256 amountInToken0, uint256 amountInToken1, uint256 amountOutToken0, uint256 amountOutToken1, bool deductFees) internal {
         //Update token reserves and other necessary data
         if (deductFees) {
             _reserve0 += amountInToken0 - (_pendingLiquidityFees + _pendingProtocolFees);
@@ -320,6 +318,8 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
             _reserve0 += amountInToken0;
             _reserve1 += amountInToken1;
         }
+        _reserve0 -= amountOutToken0;
+        _reserve1 -= amountOutToken1;
     }
     /**
      * @dev Calculates and handles the distribution of fees for each swap transaction.

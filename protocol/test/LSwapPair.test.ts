@@ -9,7 +9,7 @@ describe("LSwapPair", function () {
   async function deploy() {
 
     // Contracts are deployed using the first signer/account by default
-    const [account1, otherAccount] = await hre.viem.getWalletClients();
+    const [account1, account2] = await hre.viem.getWalletClients();
 
     const MockERC20 = await hre.viem.deployContract("MockERC20", ["TUSD", "TUSD"])
 
@@ -27,8 +27,34 @@ describe("LSwapPair", function () {
 
     const publicClient = await hre.viem.getPublicClient();
 
-    return {  LFactory, LSwapPair, LSwapPairPool, MockERC20, MockERC20_1, account1,  otherAccount, publicClient, };
+    return {  LFactory, LSwapPair, LSwapPairPool, MockERC20, MockERC20_1, account1, account2, publicClient, };
 
+  }
+
+
+  async function deposit() {
+    const data = await loadFixture(deploy);
+
+    const { account1, LSwapPairPool, MockERC20, MockERC20_1 } = data
+
+    const deposit0 = parseEther("100", "wei")
+    const deposit1 = parseEther("100", "wei")
+
+    const expectedLpShare = sqrt(deposit0 * deposit0) - 1000n
+
+    await MockERC20.write.transfer([LSwapPairPool.address, deposit0]) 
+    await MockERC20_1.write.transfer([LSwapPairPool.address, deposit1]) 
+
+    await LSwapPairPool.write.mint([account1.account.address])
+
+    expect(await LSwapPairPool.read.totalSupply()).to.be.equal(expectedLpShare + 1000n)
+
+    expect(await LSwapPairPool.read.balanceOf([account1.account.address])).to.be.equal(expectedLpShare)
+
+    // Reserves should be equal to deposit
+    expect(await LSwapPairPool.read.getReserves()).to.be.deep.equal([deposit0, deposit1])
+
+    return {...data, deposit0, deposit1 }
   }
 
   describe("Deposit Liquidity", function () {
@@ -51,13 +77,76 @@ describe("LSwapPair", function () {
 
       expect(await LSwapPairPool.read.balanceOf([account1.account.address])).to.be.equal(expectedLpShare)
 
+      // Reserves should be equal to deposit
       expect(await LSwapPairPool.read.getReserves()).to.be.deep.equal([deposit0, deposit1])
 
 
     });
 
 
+    it("Should deposit and mint approiate LP tokens for account 2", async function () {
+
+      const { account2, LSwapPairPool, MockERC20, MockERC20_1 } = await loadFixture(deposit);
+
+      const deposit0 = parseEther("100", "wei")
+      const deposit1 = parseEther("100", "wei")
+
+      const expectedLpShare = sqrt(deposit0 * deposit0) - 1000n
+
+      await MockERC20.write.transfer([LSwapPairPool.address, deposit0]) 
+      await MockERC20_1.write.transfer([LSwapPairPool.address, deposit1]) 
+
+      await LSwapPairPool.write.mint([account2.account.address])
+
+      expect(await LSwapPairPool.read.totalSupply()).to.be.equal((expectedLpShare + 1000n) *2n)
+
+      //expect(await LSwapPairPool.read.balanceOf([account2.account.address])).to.be.equal(expectedLpShare)
+
+      // Reserves should be equal to deposit
+      expect(await LSwapPairPool.read.getReserves()).to.be.deep.equal([deposit0 * 2n, deposit1 * 2n])
+
+
+    });
+
+
   });
+
+  describe("Swap", function () {
+
+    it("Should Swap token0 for token1", async function () {
+
+      const { account2, LSwapPairPool, MockERC20, MockERC20_1 } = await loadFixture(deposit);
+
+      const deposit_ = parseEther("10", "wei")
+
+      const amountOut = deposit_ * 2n / 3n
+
+      const [initialReserve0, initialReserve1] = await LSwapPairPool.read.getReserves()
+
+      const totalSupply = await LSwapPairPool.read.totalSupply()
+
+      await MockERC20.write.transfer([LSwapPairPool.address, deposit_]) 
+
+      // should be zero before swap
+      expect(await MockERC20_1.read.balanceOf([account2.account.address])).to.be.equal(0n)
+
+      await LSwapPairPool.write.swap([amountOut, 0n, account2.account.address])
+
+      // should be equal to amount out after swap
+      expect(await MockERC20_1.read.balanceOf([account2.account.address])).to.be.equal(amountOut)
+
+      expect(totalSupply).to.be.equal(await LSwapPairPool.read.totalSupply())
+
+      // Reserves should be equal to deposit
+      expect(await LSwapPairPool.read.getReserves()).to.be.deep.equal([
+        initialReserve0 - amountOut, initialReserve1 + deposit_
+      ])
+
+    });
+
+
+  });
+
 
  
 });

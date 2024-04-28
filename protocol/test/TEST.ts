@@ -27,29 +27,7 @@ describe("TEST", function () {
 
   describe("Deployment", function () {
 
-    it("ttt", async function () {
-
-      const deposit = parseEther("1000", "wei")
-
-      const { Vault, MockERC20, account1, account2 } = await loadFixture(deploy);
-
-      await Vault.write.deposit([deposit, account1.account.address])
-
-      console.log("W - ", await Vault.read.maxWithdraw([account1.account.address]))
-
-      console.log("B - ", await Vault.read.balanceOf([account1.account.address]))
-
-      await Vault.write.deposit([deposit, account2.account.address])
-
-      console.log("W - ", await Vault.read.maxWithdraw([account2.account.address]))
-
-      console.log("B - ", await Vault.read.balanceOf([account2.account.address]))
-
-
-    });
-
-
-  });
+  })
 
 
  
