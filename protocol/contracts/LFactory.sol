@@ -52,6 +52,7 @@ contract LFactory {
 
         string memory symbol = ERC20(address(_token)).symbol();
 
+        // no time to create a clone factory
         pool = address(new LCollateralPool(_token, name, symbol));
 
         _token.safeTransferFrom(msg.sender, address(this), assets);
