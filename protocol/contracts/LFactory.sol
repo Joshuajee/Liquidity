@@ -94,6 +94,8 @@ contract LFactory {
 
         address collateralPool = getCollateralPool(collateral);
 
+        LCollateralPool lCollateralPool = LCollateralPool(collateralPool); 
+
         LSwapPair(ammPool).borrow(tokenToBorrow, borrower, amount);
 
     }

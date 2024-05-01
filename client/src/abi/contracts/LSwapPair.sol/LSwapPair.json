@@ -53,7 +53,17 @@
   },
   {
     "inputs": [],
+    "name": "LoanAmountGreaterThanThreshold",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "MultipleOutputAmounts",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "OnlyFactory",
     "type": "error"
   },
   {
@@ -95,6 +105,31 @@
       }
     ],
     "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "tokenToBorrow",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "borrower",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Borrow",
     "type": "event"
   },
   {
@@ -318,6 +353,29 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "tokenToBorrow",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "borrower",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "borrow",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "to",
         "type": "address"
       }
@@ -421,7 +479,12 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "pendingLiquidityFees0",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "pendingLiquidityFees1",
         "type": "uint256"
       }
     ],
@@ -434,7 +497,12 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "pendingProtocolFees0",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "pendingProtocolFees1",
         "type": "uint256"
       }
     ],
@@ -573,13 +641,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "sync",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
