@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import "./LSwapPair.sol";
+
 import "./LCollateralPool.sol";
 import "hardhat/console.sol";
 
@@ -83,6 +84,18 @@ contract LFactory {
         } else {
             return (token1, token0);
         }
+    }
+
+    function borrow(address collateral, address tokenToBorrow, uint amount) external {
+
+        address borrower = msg.sender;
+
+        address ammPool = getPool(collateral, tokenToBorrow);
+
+        address collateralPool = getCollateralPool(collateral);
+
+        LSwapPair(ammPool).borrow(tokenToBorrow, borrower, amount);
+
     }
 
 

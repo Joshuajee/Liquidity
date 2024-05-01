@@ -119,6 +119,8 @@ describe("LSwapPair", function () {
 
       const deposit_ = parseEther("10", "wei")
 
+      const fee = deposit_ * 99n / 10000n
+
       const amountOut = deposit_ * 2n / 3n
 
       const [initialReserve0, initialReserve1] = await LSwapPairPool.read.getReserves()
@@ -127,20 +129,28 @@ describe("LSwapPair", function () {
 
       await MockERC20.write.transfer([LSwapPairPool.address, deposit_]) 
 
+      console.log("--", MockERC20.address)
+
       // should be zero before swap
       expect(await MockERC20_1.read.balanceOf([account2.account.address])).to.be.equal(0n)
 
-      await LSwapPairPool.write.swap([amountOut, 0n, account2.account.address])
+      await LSwapPairPool.write.swap([0n, amountOut, account2.account.address])
 
       // should be equal to amount out after swap
       expect(await MockERC20_1.read.balanceOf([account2.account.address])).to.be.equal(amountOut)
 
       expect(totalSupply).to.be.equal(await LSwapPairPool.read.totalSupply())
 
+      console.log({fee})
+
       // Reserves should be equal to deposit
       expect(await LSwapPairPool.read.getReserves()).to.be.deep.equal([
-        initialReserve0 - amountOut, initialReserve1 + deposit_
+        initialReserve1 + deposit_ - fee, initialReserve0 - amountOut
       ])
+
+      console.log(await LSwapPairPool.read.getPendingProtocolFees())
+
+      console.log(await LSwapPairPool.read.getPendingLiquidityFees())
 
     });
 
