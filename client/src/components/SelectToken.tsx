@@ -1,22 +1,29 @@
 import { useState } from "react"
 import ModalWrapper from "./ModalWrapper"
 import { DEFAULT_TOKENS } from "@/lib/constants"
+import { IToken } from "@/lib/interfaces"
 
-const SelectToken = () => {
+
+interface IProps {
+    selected?: IToken;
+    setSelected: (selected: IToken) => void;
+}
+
+const SelectToken = ({ selected, setSelected } : IProps) => {
 
     const [open, setOpen] = useState(false)
 
     return (
         <>
             <button onClick={() => setOpen(true)} className="bg-gray-300 rounded-full px-4 py-1 text-black">
-                Select Token
+                { selected ?  selected.symbol : "Select Token" }
             </button>
 
             <ModalWrapper 
                 open={open} 
                 close={() => setOpen(false)}>
 
-                    <div className="rounded-xl h-80 w-[400px] bg-black border-[1px] border-white p-3">
+                    <div className="rounded-xl h-[400px] w-[400px] bg-black border-[1px] border-white p-3">
 
                         <div className="flex justify-between">
                             <h4>Select a Token</h4>
@@ -34,15 +41,15 @@ const SelectToken = () => {
 
                         <hr></hr>
 
-                        <div className="flex flex-col gap-3 mt-4">
+                        <div className="flex flex-col gap-3 mt-4 overflow-y-auto h-[380px]">
 
                             {
                                 DEFAULT_TOKENS.map((token, index) => {
                                     return (
-                                        <div key={index} className="flex gap-x-5">
+                                        <div onClick={() => {setSelected?.(token); setOpen(false) } } key={index} className="flex py-2 rounded-md cursor-pointer px-6 gap-x-5 hover:bg-gray-900">
 
-                                            <div>
-                                                <img className="rounded-full" width={"50px"} height={"50px"} src={token.icon} alt="Coin" />
+                                            <div className="flex justify-center items-center">
+                                                <img className="rounded-full" width={"40px"} height={"40px"} src={token.icon} alt="Coin" />
                                             </div>
 
                                             <div>

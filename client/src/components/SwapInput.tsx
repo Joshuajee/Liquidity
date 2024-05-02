@@ -1,6 +1,45 @@
+import { IToken } from "@/lib/interfaces";
 import SelectToken from "./SelectToken"
+import { useAccount, useReadContract } from "wagmi";
+import TokenAbi from "@/abi/contracts/mocks/MockERC20.sol/MockERC20.json"
+import { useEffect } from "react";
+import { weiToCurrency } from "@/lib/utils";
+import useCurrentChainId from "@/hooks/useCurrentChainId";
 
-const SwapInput = () => {
+interface IProps {
+    selected?: IToken;
+    setSelected: (selected: IToken) => void;
+}
+
+
+const SwapInput = ({selected, setSelected} : IProps) => {
+
+    const { address } = useAccount()
+
+    const chainId = useCurrentChainId()
+
+    const { data, isError, error, refetch } = useReadContract({
+        abi: TokenAbi,
+        address: selected?.address,
+        functionName: "balanceOf",
+        args: [address],
+        chainId
+    })
+
+
+
+
+    useEffect(() => {
+        console.log(selected?.address, address, {data})
+        refetch()
+    }, [selected?.address])
+
+    useEffect(() => {
+        if (isError) console.log(error)
+    }, [isError, error])
+
+    console.log(data)
+
     return (
         <div className="border-[1px] h-24 my-2 rounded-xl flex justify-between p-2">
 
@@ -13,10 +52,12 @@ const SwapInput = () => {
 
             <div className="flex flex-col justify-end ">
 
-                <SelectToken />
+                <SelectToken selected={selected} setSelected={setSelected} />
 
-                <p className="text-right">price</p>
-
+                <p className="text-right h-5">
+                    { data ? "Balance: " +  weiToCurrency(BigInt(data as number)) : ""}
+                </p>
+            
             </div>
 
         </div>

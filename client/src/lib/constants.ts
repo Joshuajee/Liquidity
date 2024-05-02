@@ -1,23 +1,31 @@
-import { zeroAddress } from "viem";
 import { IToken } from "./interfaces";
+
+export const FACTORY = import.meta.env.VITE_LFACTORY
+export const ROUTER = import.meta.env.VITE_LROUTER
 
 export const DEFAULT_TOKENS: IToken[] = [
     {
-        name: "TUSDC",
+        name: "Test USDC",
         symbol: "TUSDC",
-        address: zeroAddress,
-        icon: ""
+        address: import.meta.env.VITE_USDC,
+        icon: "/coin/usdc.jpg"
     },
     {
-        name: "TUSDT",
+        name: "Test USDT",
         symbol: "TUSDT",
-        address: zeroAddress,
-        icon: ""
+        address: import.meta.env.VITE_USDT,
+        icon: "/coin/tether.jpg"
     },
     {
-        name: "TJEE",
-        symbol: "TJEE",
-        address: zeroAddress,
-        icon: ""
+        name: "Test WBTC",
+        symbol: "TWBTC",
+        address: import.meta.env.VITE_WBTC,
+        icon: "/coin/btc.jpg"
+    },
+    {
+        name: "Test DAI",
+        symbol: "TDAI",
+        address: import.meta.env.VITE_DAI,
+        icon: "/coin/dai.jpg"
     }
 ]

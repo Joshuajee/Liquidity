@@ -2,6 +2,7 @@ import AddLiquidity from "@/components/AddLiquidity"
 
 const AddLiquidityPage = () => {
 
+
     return (
         <div className="flex justify-center h-full w-full px-10">
 
@@ -10,7 +11,6 @@ const AddLiquidityPage = () => {
                 <div className="flex justify-center mt-10 mb-4 w-full">
 
                     <AddLiquidity />
-
      
                 </div>
 
