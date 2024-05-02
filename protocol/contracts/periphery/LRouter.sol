@@ -20,11 +20,22 @@ import {LV1Library} from "../liberies/LV1Library.sol";
  * @dev This contract is stateless and does not store any data
  * @author LSwap -- Joshua Evuetapha
  */
-contract LV1Router is ReentrancyGuard {
+contract LRouter is ReentrancyGuard {
 
     error Expired();
 
     using SafeERC20 for IERC20;
+
+    struct AddLiquidity {
+        address tokenA;
+        address tokenB;
+        uint amountADesired;
+        uint amountBDesired;
+        uint amountAMin;
+        uint amountBMin;
+        address to;
+        uint deadline;
+    }
 
     address public immutable FACTORY;
    // address public immutable WETH;
@@ -50,62 +61,50 @@ contract LV1Router is ReentrancyGuard {
     // **** ADD LIQUIDITY ****
 
         // **** ADD LIQUIDITY ****
-    function _addLiquidity(
-        address tokenA,
-        address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin
-    ) internal virtual returns (uint amountA, uint amountB) {
+    function _addLiquidity(AddLiquidity calldata params, address pair) internal virtual returns (uint amountA, uint amountB) {
 
-        address pair = ILFactory(FACTORY).getPool(tokenA, tokenB);
-        // create the pair if it doesn't exist yet
-        if (ILFactory(FACTORY).getPool(tokenA, tokenB) == address(0)) {
-            pair = ILFactory(FACTORY).createPair(tokenA, tokenB);
-        }   
+        uint reserveA;
+        uint reserveB;
 
         {
+            // create the pair if it doesn't exist yet
+            if (ILFactory(FACTORY).getPool(params.tokenA, params.tokenB) == address(0)) {
+                pair = ILFactory(FACTORY).createPair(params.tokenA, params.tokenB);
+            }   
 
-            (uint reserveA, uint reserveB) = LV1Library.getReserves(pair, tokenA, tokenB);
+            (reserveA, reserveB) = LV1Library.getReserves(pair, params.tokenA, params.tokenB);
 
+        }
+
+        {
             if (reserveA == 0 && reserveB == 0) {
 
-                (amountA, amountB) = (amountADesired, amountBDesired);
+                (amountA, amountB) = (params.amountADesired, params.amountBDesired);
 
             } else {
-                uint amountBOptimal = LV1Library.quote(amountADesired, reserveA, reserveB);
-                if (amountBOptimal <= amountBDesired) {
-                    require(amountBOptimal >= amountBMin, ' INSUFFICIENT_B_AMOUNT');
-                    (amountA, amountB) = (amountADesired, amountBOptimal);
+                uint amountBOptimal = LV1Library.quote(params.amountADesired, reserveA, reserveB);
+                if (amountBOptimal <= params.amountBDesired) {
+                    require(amountBOptimal >= params.amountBMin, ' INSUFFICIENT_B_AMOUNT');
+                    (amountA, amountB) = (params.amountADesired, amountBOptimal);
                 } else {
-                    uint amountAOptimal = LV1Library.quote(amountBDesired, reserveB, reserveA);
-                    assert(amountAOptimal <= amountADesired);
-                    require(amountAOptimal >= amountAMin, ' INSUFFICIENT_A_AMOUNT');
-                    (amountA, amountB) = (amountAOptimal, amountBDesired);
+                    uint amountAOptimal = LV1Library.quote(params.amountBDesired, reserveB, reserveA);
+                    assert(amountAOptimal <= params.amountADesired);
+                    require(amountAOptimal >= params.amountAMin, ' INSUFFICIENT_A_AMOUNT');
+                    (amountA, amountB) = (amountAOptimal, params.amountBDesired);
                 }
          
             }
         
         }
-        
+
     }
-    function addLiquidity(
-        address tokenA,
-        address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
-        uint deadline
-    ) external ensure(deadline) returns (uint amountA, uint amountB, uint liquidity) {
-        (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
+    function addLiquidity(AddLiquidity calldata params) external ensure(params.deadline) returns (uint amountA, uint amountB, uint liquidity) {
+        address pair =  ILFactory(FACTORY).getPool(params.tokenA, params.tokenB);
         {
-            address pair =  ILFactory(FACTORY).getPool(tokenA, tokenB);
-            IERC20(tokenA).safeTransferFrom(msg.sender, pair, amountA);
-            IERC20(tokenB).safeTransferFrom(msg.sender, pair, amountB);
-            liquidity = LSwapPair(pair).mint(to);
+            (amountA, amountB) = _addLiquidity(params, pair);
+            IERC20(params.tokenA).safeTransferFrom(msg.sender, pair, amountA);
+            IERC20(params.tokenB).safeTransferFrom(msg.sender, pair, amountB);
+            liquidity = LSwapPair(pair).mint(params.to);
         }
     }
 
@@ -147,8 +146,8 @@ contract LV1Router is ReentrancyGuard {
         address pair = ILFactory(FACTORY).getPool(tokenA, tokenB);
         LSwapPair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
         (uint amount0, uint amount1) = LSwapPair(pair).burn(to);
-        // (address token0,) = LV1Library.sortTokens(tokenA, tokenB);
-        // (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
+        (address token0,) = LV1Library.sortTokens(tokenA, tokenB);
+        (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
         require(amountA >= amountAMin, ' INSUFFICIENT_A_AMOUNT');
         require(amountB >= amountBMin, ' INSUFFICIENT_B_AMOUNT');
     }

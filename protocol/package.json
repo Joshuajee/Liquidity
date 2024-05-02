@@ -4,6 +4,10 @@
   "description": "DEX and Lending protocol",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "test": "npx hardhat test",
+    "deploy:local": "npx hardhat ignition deploy ./ignition/modules/Liquidity.ts --network localhost"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^0.15.0",
     "@nomicfoundation/hardhat-ignition-viem": "^0.15.0",
