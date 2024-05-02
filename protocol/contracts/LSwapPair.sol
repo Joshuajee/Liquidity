@@ -417,4 +417,5 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     function getFACTORY() external view returns (address) {
         return FACTORY;
     }
+    
 }

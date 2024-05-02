@@ -4,13 +4,14 @@ pragma solidity 0.8.20;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {ILFactory} from "./interfaces/ILFactory.sol";
 import "./LSwapPair.sol";
 
 import "./LCollateralPool.sol";
 import "hardhat/console.sol";
 
 
-contract LFactory {
+contract LFactory is ILFactory {
 
     error PairAlreadyExist(address pair);
     error PoolAlreadyExist(address pool);
@@ -23,8 +24,16 @@ contract LFactory {
     mapping(address => mapping(address => address)) private pairs;
     mapping(address => address) private collateralPools;
 
+    //mapping of user to collateral, to loan MarketStruct
+    mapping(address => mapping(address => LoanMarket[])) public userLoan;
+
     constructor(address swapPool)  {
         PAIR_REFERENCE = swapPool;
+    }
+
+    modifier checkLoan(address borrower, address collateral) {
+        _;
+        _checkLoan(borrower, collateral);
     }
 
     function createPair(address _token0, address _token1) external returns (address pair) {
@@ -86,7 +95,7 @@ contract LFactory {
         }
     }
 
-    function borrow(address collateral, address tokenToBorrow, uint amount) external {
+    function borrow(address collateral, address tokenToBorrow, uint amount) external checkLoan(msg.sender, collateral) {
 
         address borrower = msg.sender;
 
@@ -96,7 +105,35 @@ contract LFactory {
 
         LCollateralPool lCollateralPool = LCollateralPool(collateralPool); 
 
+        uint borrowerBalance = lCollateralPool.balanceOf(borrower);
+
         LSwapPair(ammPool).borrow(tokenToBorrow, borrower, amount);
+
+        userLoan[borrower][collateral].push(LoanMarket({
+            ammPool: ammPool,
+            collateralPool: collateralPool,
+            tokenBorrowed: tokenToBorrow,
+            amount: amount,
+            interestRate: 1,
+            borrowedAt: uint64(block.timestamp)
+        }));
+
+    }
+
+
+    function _checkLoan(address borrower, address collateral) internal {
+
+        LoanMarket [] memory loans = userLoan[borrower][collateral];
+        if (loans.length > 256) revert("Too many loans on a collateral");
+
+        uint totalLTV;
+
+        for (uint i = 0; i < loans.length; i++) {
+            uint interest = loans[i].interestRate * (block.timestamp - loans[i].borrowedAt);
+            totalLTV += 1;
+        }
+
+
 
     }
 
