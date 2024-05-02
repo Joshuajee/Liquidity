@@ -1,8 +1,8 @@
-# Project Name: Liquidity Fusion
+# Project Name: Liquidity
 
 Tagline: Unlocking Efficient Liquidity and Funding Opportunities
 
-Overview: Liquidity Fusion is a cutting-edge decentralized finance (DeFi) platform that combines an Automated Market Maker (AMM) with a lending protocol, revolutionizing the way liquidity is provisioned and utilized in the digital asset space.
+Overview: Liquidity is a cutting-edge decentralized finance (DeFi) platform that combines an Automated Market Maker (AMM) with a lending protocol, revolutionizing the way liquidity is provisioned and utilized in the digital asset space.
 
 ## Key Features:
 
@@ -14,7 +14,7 @@ Overview: Liquidity Fusion is a cutting-edge decentralized finance (DeFi) platfo
 
 ## Benefits:
 
-1. Enhanced Liquidity: Liquidity Fusion aggregates liquidity from multiple sources, providing a deeper and more efficient market.
+1. Enhanced Liquidity: Liquidity aggregates liquidity from multiple sources, providing a deeper and more efficient market.
 2. Flexible Funding: Users can access funding opportunities through lending, leveraging their digital assets.
 3. Improved Trading Experience: Minimized slippage and optimized pricing ensure a superior trading experience.
 4. Decentralized and Community-Driven: Governance and decision-making processes are transparent, inclusive, and community-led.
