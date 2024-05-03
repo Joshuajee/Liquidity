@@ -4,7 +4,7 @@ import { useAccount, useReadContract } from "wagmi";
 import TokenAbi from "@/abi/contracts/mocks/MockERC20.sol/MockERC20.json"
 import { useEffect } from "react";
 import { weiToCurrency } from "@/lib/utils";
-import useCurrentChainId from "@/hooks/useCurrentChainId";
+import useCurrentChain from "@/hooks/useCurrentChain";
 
 interface IProps {
     selected?: IToken;
@@ -16,29 +16,23 @@ const SwapInput = ({selected, setSelected} : IProps) => {
 
     const { address } = useAccount()
 
-    const chainId = useCurrentChainId()
+    const chain = useCurrentChain()
 
     const { data, isError, error, refetch } = useReadContract({
         abi: TokenAbi,
         address: selected?.address,
         functionName: "balanceOf",
         args: [address],
-        chainId
+        chainId: chain.id
     })
 
-
-
-
     useEffect(() => {
-        console.log(selected?.address, address, {data})
         refetch()
     }, [selected?.address])
 
     useEffect(() => {
         if (isError) console.log(error)
     }, [isError, error])
-
-    console.log(data)
 
     return (
         <div className="border-[1px] h-24 my-2 rounded-xl flex justify-between p-2">

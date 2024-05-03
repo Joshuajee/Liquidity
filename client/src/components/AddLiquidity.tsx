@@ -5,11 +5,12 @@ import { IToken } from "@/lib/interfaces"
 import { useAccount, useReadContract } from "wagmi"
 import { FACTORY, ROUTER } from "@/lib/constants"
 import FactoryAbi from "@/abi/contracts/LFactory.sol/LFactory.json"
-import useCurrentChainId from "@/hooks/useCurrentChainId"
 import { toast } from "react-toastify"
 import { parseEther, zeroAddress } from "viem"
 import RouterAbi from "@/abi/contracts/periphery/LRouter.sol/LRouter.json"
 import useViemClient from "@/hooks/useClients"
+import useTokenApproval from "@/hooks/useTokenApproval"
+import useCurrentChain from "@/hooks/useCurrentChain"
 
 const AddLiquidity = () => {
 
@@ -22,14 +23,17 @@ const AddLiquidity = () => {
     const [tokenA, setTokenA] = useState<IToken>()
     const [tokenB, setTokenB] = useState<IToken>()
 
-    const chainId = useCurrentChainId()
+    const approvalA = useTokenApproval(tokenA?.address)
+    const approvalB = useTokenApproval(tokenB?.address)
+
+    const chain = useCurrentChain()
 
     const pair = useReadContract({
         abi: FactoryAbi,
         address: FACTORY,
         functionName: "getToken",
         args: [tokenA, tokenB],
-        chainId,
+        chainId: chain.id,
     })
 
     useEffect(() => {
@@ -45,7 +49,15 @@ const AddLiquidity = () => {
         }
     }, [pair])
 
-    const text = (!tokenA || !tokenB) ? "Select Tokens" : created ? "Add Liquidity" : "Create Pair"
+    let text = (!tokenA || !tokenB) ? "Select Tokens" : created ? "Add Liquidity" : "Create Pair"
+
+
+    if ((approvalA as any)?.allowance < 100n) {
+        text = "Approve " + tokenA?.name
+
+    } else if ((approvalB as any)?.allowance < 100n) {
+        text = "Approve " + tokenB?.name
+    }
 
 
     const addLiquidity = async () => {
@@ -63,6 +75,18 @@ const AddLiquidity = () => {
 
     }
 
+
+    const handleClick = () => {
+        if ((approvalA as any)?.allowance < 100n) {
+            approvalA.createAllowance()
+        }  else if ((approvalB as any)?.allowance < 100n) {
+            approvalB.createAllowance()
+        }  else {
+            addLiquidity()
+        }
+     
+    }
+
     return (
         <div className="flex justify-center items-center h-full w-full">
 
@@ -74,7 +98,7 @@ const AddLiquidity = () => {
 
                 <SwapInput selected={tokenB} setSelected={setTokenB} />
 
-                <Web3Btn onClick={addLiquidity} loading={pair.isLoading}>{text}</Web3Btn>
+                <Web3Btn onClick={handleClick} loading={pair.isLoading}>{text}</Web3Btn>
 
             </div>
 

@@ -1,6 +1,6 @@
 import SwapInput from "@/components/SwapInput"
 import Web3Btn from "@/components/Web3Btn"
-import useCurrentChainId from "@/hooks/useCurrentChainId"
+import useCurrentChainId from "@/hooks/useCurrentChain"
 import { IToken } from "@/lib/interfaces"
 import { useState } from "react"
 

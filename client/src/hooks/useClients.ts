@@ -1,20 +1,19 @@
 
 import { createPublicClient, createWalletClient, custom, http } from 'viem'
-import { liskSepolia, localhost } from 'viem/chains'
-import useCurrentChainId from './useCurrentChainId'
+import useCurrentChain from './useCurrentChain'
  
 
 const useViemClient = () => {
 
-    const chainId = useCurrentChainId()
+    const chain = useCurrentChain()
 
     const publicClient = createPublicClient({
-        chain: chainId === localhost.id ? localhost : liskSepolia,
+        chain,
         transport: http()
     })
 
     const walletClient = createWalletClient({
-        chain: chainId === localhost.id ? localhost : liskSepolia,
+        chain,
         transport: custom((window as any)?.ethereum)
     })
        
