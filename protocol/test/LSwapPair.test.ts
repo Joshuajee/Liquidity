@@ -1,7 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
-import { checksumAddress, parseEther, zeroAddress } from "viem";
+import {  parseEther, } from "viem";
 import sqrt from "bigint-isqrt";
 
 describe("LSwapPair", function () {
@@ -128,8 +128,6 @@ describe("LSwapPair", function () {
       const totalSupply = await LSwapPairPool.read.totalSupply()
 
       await MockERC20.write.transfer([LSwapPairPool.address, deposit_]) 
-
-      console.log("--", MockERC20.address)
 
       // should be zero before swap
       expect(await MockERC20_1.read.balanceOf([account2.account.address])).to.be.equal(0n)

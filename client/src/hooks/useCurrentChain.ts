@@ -1,4 +1,4 @@
-import { hardhat, localhost } from "viem/chains"
+import { hardhat } from "viem/chains"
 
 const useCurrentChain = () => {
 

@@ -2,17 +2,19 @@ import { IToken } from "@/lib/interfaces";
 import SelectToken from "./SelectToken"
 import { useAccount, useReadContract } from "wagmi";
 import TokenAbi from "@/abi/contracts/mocks/MockERC20.sol/MockERC20.json"
-import { useEffect } from "react";
+import { ChangeEvent, useEffect } from "react";
 import { weiToCurrency } from "@/lib/utils";
 import useCurrentChain from "@/hooks/useCurrentChain";
 
 interface IProps {
+    value: string;
+    setValue: (value: string) => void;
     selected?: IToken;
     setSelected: (selected: IToken) => void;
 }
 
 
-const SwapInput = ({selected, setSelected} : IProps) => {
+const SwapInput = ({ value, selected, setValue, setSelected} : IProps) => {
 
     const { address } = useAccount()
 
@@ -40,6 +42,8 @@ const SwapInput = ({selected, setSelected} : IProps) => {
             <div>
                 <h4 className="text-xs">You Pay</h4>
                 <input 
+                    value={value}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setValue(e.currentTarget.value)}
                     className="mt-2 text-3xl w-[300px] font-bold text-white outline-none border-none bg-inherit" 
                     type="number" placeholder="0" />
             </div>

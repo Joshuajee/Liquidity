@@ -23,6 +23,14 @@ const AddLiquidity = () => {
     const [tokenA, setTokenA] = useState<IToken>()
     const [tokenB, setTokenB] = useState<IToken>()
 
+    const [valueA, setValueA] = useState("")
+    const [valueB, setValueB] = useState("")
+
+    const valueAToWei = parseEther(valueA.toString(), "wei")
+    const valueBToWei = parseEther(valueB.toString(), "wei")
+
+    const [loading, setLoading] = useState(false)
+
     const approvalA = useTokenApproval(tokenA?.address)
     const approvalB = useTokenApproval(tokenB?.address)
 
@@ -38,48 +46,65 @@ const AddLiquidity = () => {
 
     useEffect(() => {
         if (pair.isError) {
-            toast.error(String(pair?.error))
+            //toast.error(String(pair?.error.shortMessage))
         }
         if (pair.isSuccess) {
-            if (pair.data == zeroAddress) {
-                setCreated(false)
-            } else {
-                setCreated(true)
-            }
+            toast.success("Liquidty added succesfully")
         }
     }, [pair])
 
-    let text = (!tokenA || !tokenB) ? "Select Tokens" : created ? "Add Liquidity" : "Create Pair"
+    let text = (!tokenA || !tokenB) ? "Select Tokens" : pair.data != zeroAddress ? "Add Liquidity" : "Create Pair"
 
 
-    if ((approvalA as any)?.allowance < 100n) {
+    if ((approvalA as any)?.allowance < valueAToWei) {
         text = "Approve " + tokenA?.name
 
-    } else if ((approvalB as any)?.allowance < 100n) {
+    } else if ((approvalB as any)?.allowance < valueBToWei) {
         text = "Approve " + tokenB?.name
     }
 
 
     const addLiquidity = async () => {
-        const disired = parseEther("10", "wei")
 
-        const { request } = await publicClient.simulateContract({
-            address: ROUTER,
-            abi: RouterAbi,
-            functionName: 'addLiquidity',
-            args:  [[tokenA?.address, tokenB?.address, disired, disired, 0, 0, address, parseInt((Date.now() / 1000).toString()) + 3600]],
-            account: address
-          })
+        const slippage = 90n
 
-        await walletClient.writeContract(request)
+        setLoading(true)
+
+        try {
+
+            const { request } = await publicClient.simulateContract({
+                address: ROUTER,
+                abi: RouterAbi,
+                functionName: 'addLiquidity',
+                args: [
+                    [
+                        tokenA?.address, tokenB?.address, 
+                        valueAToWei, valueBToWei, 
+                        valueAToWei * slippage / 100n, 
+                        valueBToWei * slippage / 100n, 
+                        address, 
+                        Number(parseInt((Date.now() / 1000).toString())) * 3600
+                    ]
+                ],
+                account: address
+            })
+
+            await walletClient.writeContract(request)
+
+        } catch (e) {
+            toast.error((e as any)?.reason)
+            console.error(e)
+        } finally {
+            setLoading(false)
+        }
 
     }
 
 
     const handleClick = () => {
-        if ((approvalA as any)?.allowance < 100n) {
+        if ((approvalA as any)?.allowance < valueAToWei) {
             approvalA.createAllowance()
-        }  else if ((approvalB as any)?.allowance < 100n) {
+        }  else if ((approvalB as any)?.allowance < valueBToWei) {
             approvalB.createAllowance()
         }  else {
             addLiquidity()
@@ -94,11 +119,11 @@ const AddLiquidity = () => {
                 
                 <h2>Add Liquidity</h2>
 
-                <SwapInput selected={tokenA} setSelected={setTokenA} />
+                <SwapInput value={valueA} setValue={setValueA} selected={tokenA} setSelected={setTokenA} />
 
-                <SwapInput selected={tokenB} setSelected={setTokenB} />
+                <SwapInput value={valueB} setValue={setValueB}  selected={tokenB} setSelected={setTokenB} />
 
-                <Web3Btn onClick={handleClick} loading={pair.isLoading}>{text}</Web3Btn>
+                <Web3Btn onClick={handleClick} loading={pair.isLoading || loading}>{text}</Web3Btn>
 
             </div>
 

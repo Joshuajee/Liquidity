@@ -45,7 +45,7 @@ const useTokenApproval = (token?: Address) => {
 
     useEffect(() => {
         if (allowance.isError) {
-            toast.error(String(allowance?.error))
+            toast.error(String(allowance?.error?.shortMessage))
         }
         if (allowance.isSuccess) {
             console.log("Allowance: ", allowance.data)

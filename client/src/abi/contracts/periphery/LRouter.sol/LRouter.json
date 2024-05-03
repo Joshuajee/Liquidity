@@ -142,6 +142,11 @@
         "internalType": "uint256",
         "name": "liquidity",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "pair",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",

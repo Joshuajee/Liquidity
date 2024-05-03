@@ -61,14 +61,15 @@ contract LRouter is ReentrancyGuard {
     // **** ADD LIQUIDITY ****
 
         // **** ADD LIQUIDITY ****
-    function _addLiquidity(AddLiquidity calldata params, address pair) internal virtual returns (uint amountA, uint amountB) {
+    function _addLiquidity(AddLiquidity calldata params) internal virtual returns (uint amountA, uint amountB, address pair) {
 
         uint reserveA;
         uint reserveB;
 
         {
+            pair = ILFactory(FACTORY).getPool(params.tokenA, params.tokenB);
             // create the pair if it doesn't exist yet
-            if (ILFactory(FACTORY).getPool(params.tokenA, params.tokenB) == address(0)) {
+            if (pair == address(0)) {
                 pair = ILFactory(FACTORY).createPair(params.tokenA, params.tokenB);
             }   
 
@@ -98,14 +99,11 @@ contract LRouter is ReentrancyGuard {
         }
 
     }
-    function addLiquidity(AddLiquidity calldata params) external ensure(params.deadline) returns (uint amountA, uint amountB, uint liquidity) {
-        address pair =  ILFactory(FACTORY).getPool(params.tokenA, params.tokenB);
-        {
-            (amountA, amountB) = _addLiquidity(params, pair);
-            IERC20(params.tokenA).safeTransferFrom(msg.sender, pair, amountA);
-            IERC20(params.tokenB).safeTransferFrom(msg.sender, pair, amountB);
-            liquidity = LSwapPair(pair).mint(params.to);
-        }
+    function addLiquidity(AddLiquidity calldata params) external ensure(params.deadline) returns (uint amountA, uint amountB, uint liquidity, address pair) {
+        (amountA, amountB, pair) = _addLiquidity(params);
+        IERC20(params.tokenA).safeTransferFrom(msg.sender, pair, amountA);
+        IERC20(params.tokenB).safeTransferFrom(msg.sender, pair, amountB);
+        liquidity = LSwapPair(pair).mint(params.to);
     }
 
     // function addLiquidityETH(
