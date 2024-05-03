@@ -43,7 +43,7 @@ contract LFactory is ILFactory {
         (address token0, address token1) = getPairTokensOrder(_token0, _token1);
 
         unchecked {
-            salt = blockhash(block.number * block.timestamp);
+            salt = keccak256(abi.encodePacked(token0, token1, block.timestamp));
         }
 
         pair = address(LSwapPair(PAIR_REFERENCE.cloneDeterministic(salt)));

@@ -191,20 +191,22 @@ contract LRouter is ReentrancyGuard {
 
         }
     }
-    // function swapExactTokensForTokens(
-    //     uint amountIn,
-    //     uint amountOutMin,
-    //     address[] calldata path,
-    //     address to,
-    //     uint deadline
-    // ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
-    //     amounts = LV1Library.getAmountsOut(factory, amountIn, path);
-    //     require(amounts[amounts.length - 1] >= amountOutMin, ' INSUFFICIENT_OUTPUT_AMOUNT');
-    //     IERC20().safeTransferFrom(
-    //         path[0], msg.sender, LV1Library.pairFor(factory, path[0], path[1]), amounts[0]
-    //     );
-    //     _swap(amounts, path, to);
-    // }
+
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external ensure(deadline) returns (uint[] memory amounts) {
+        amounts = LV1Library.getAmountsOut(FACTORY, amountIn, path);
+        require(amounts[amounts.length - 1] >= amountOutMin, ' INSUFFICIENT_OUTPUT_AMOUNT');
+        IERC20(path[0]).safeTransferFrom(
+            msg.sender, ILFactory(FACTORY).getPool(path[0], path[1]), amounts[0]
+        );
+        _swap(amounts, path, to);
+    }
+
     // function swapTokensForExactTokens(
     //     uint amountOut,
     //     uint amountInMax,

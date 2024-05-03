@@ -1,13 +1,15 @@
-import { Address, parseEther } from "viem"
+import { Address, maxUint256  } from "viem"
 import { useAccount, useReadContract } from "wagmi"
 import TokenAbi from "@/abi/contracts/mocks/MockERC20.sol/MockERC20.json"
 import { ROUTER } from "@/lib/constants"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import useViemClient from "./useClients"
 import useCurrentChain from "./useCurrentChain"
 
 const useTokenApproval = (token?: Address) => {
+
+    const [loading, setLoading] = useState(false)
 
     const { publicClient, walletClient } = useViemClient()
 
@@ -25,21 +27,28 @@ const useTokenApproval = (token?: Address) => {
     })
 
     const createAllowance = async () => {
+        
+        try {
 
-        const disired = parseEther("100000000000", "wei")
+            setLoading(true)
 
-        const { request } = await publicClient.simulateContract({
-            address: token as Address,
-            abi:TokenAbi,
-            functionName: 'approve',
-            args:  [ROUTER, disired],
-            account: address,
-            chain
-          })
+            const { request } = await publicClient.simulateContract({
+                address: token as Address,
+                abi:TokenAbi,
+                functionName: 'approve',
+                args:  [ROUTER, maxUint256],
+                account: address,
+                chain
+            })
 
-        await walletClient.writeContract(request)
-
-        allowance.refetch()
+            await walletClient.writeContract(request)
+        } catch (e) {
+            toast.error("Error creating allowance")
+            console.error(e)
+        } finally {
+            setLoading(false)
+            allowance.refetch()
+        }
 
     }
 
@@ -53,7 +62,7 @@ const useTokenApproval = (token?: Address) => {
     }, [allowance])
 
 
-    return {allowance: allowance.data, createAllowance}
+    return {allowance: allowance.data, loading, createAllowance}
 }
 
 export default useTokenApproval

@@ -4,7 +4,7 @@ import Navbar from "./components/Navbar";
 import SwapPage from "./pages/swap-page";
 import AddLiquidityPage from "./pages/add-liquidity-page";
 import BorrowPage from "./pages/borrow-page";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 
@@ -21,7 +21,7 @@ const App = () => {
             <Route path="/borrow" element={<BorrowPage />} />
           </Routes>
         </BrowserRouter>
-        <ToastContainer />
+        <ToastContainer theme="dark" />
       </div>
     </Web3Provider>
   );

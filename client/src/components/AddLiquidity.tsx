@@ -18,8 +18,6 @@ const AddLiquidity = () => {
 
     const { publicClient, walletClient } = useViemClient()
 
-    const [created, setCreated] = useState<boolean>()
-
     const [tokenA, setTokenA] = useState<IToken>()
     const [tokenB, setTokenB] = useState<IToken>()
 

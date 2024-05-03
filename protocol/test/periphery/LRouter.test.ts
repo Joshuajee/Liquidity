@@ -1,7 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
-import {  parseEther, zeroAddress } from "viem";
+import { maxUint256, parseEther, zeroAddress } from "viem";
 import sqrt from "bigint-isqrt";
 
 describe("LRouter", function () {
@@ -27,6 +27,39 @@ describe("LRouter", function () {
 
   }
 
+  async function deployWithLiquidity () {
+
+    const data = await loadFixture(deploy);
+
+    const { account1, MockERC20, MockERC20_1 } = data
+
+    const deposit = parseEther("10000", "wei")
+
+    const input : any = [
+      MockERC20.address,
+      MockERC20_1.address,
+      deposit,
+      deposit,
+      0n, 0n, 
+      account1.account.address,
+      "1000000000000000"
+    ]
+
+    const MockERC20_2 = await hre.viem.deployContract("MockERC20", ["TGBP", "TGBP"])
+
+    await MockERC20.write.approve([data.LRouter.address, maxUint256])
+
+    await MockERC20_1.write.approve([data.LRouter.address, maxUint256])
+
+    await MockERC20_2.write.approve([data.LRouter.address, maxUint256])
+
+    await data.LRouter.write.addLiquidity([input])
+
+    return { ...data, deposit, MockERC20_2 }
+
+  }
+
+
 
   describe("Adding Liquidity", function () {
 
@@ -50,9 +83,9 @@ describe("LRouter", function () {
         "1000000000000000"
       ]
 
-      await MockERC20.write.approve([LRouter.address, deposit * 10n])
+      await MockERC20.write.approve([LRouter.address, deposit])
 
-      await MockERC20_1.write.approve([LRouter.address, deposit * 10n])
+      await MockERC20_1.write.approve([LRouter.address, deposit])
 
       await LRouter.write.addLiquidity([input])
 
@@ -70,10 +103,44 @@ describe("LRouter", function () {
       expect(await LSwapPairPool.read.getReserves()).to.be.deep.equal([deposit, deposit])
 
     });
+
+    it("Should add Liquidity with previewly created pair", async function () {
+
+      const { LRouter, deposit, MockERC20, MockERC20_1, account1 } = await loadFixture(deployWithLiquidity);
+
+      const input : any = [
+        MockERC20.address,
+        MockERC20_1.address,
+        deposit,
+        deposit,
+        0n, 0n, 
+        account1.account.address,
+        "1000000000000000"
+      ]
+
+      await LRouter.write.addLiquidity([input])
+
+    });
+
+
+    it("Should add Liquidity with another created pair", async function () {
+
+      const { LRouter, deposit, MockERC20_2, MockERC20_1, account1 } = await loadFixture(deployWithLiquidity);
+
+      const input : any = [
+        MockERC20_2.address,
+        MockERC20_1.address,
+        deposit,
+        deposit,
+        0n, 0n, 
+        account1.account.address,
+        "1000000000000000"
+      ]
+
+      await LRouter.write.addLiquidity([input])
+
+    });
     
-
-
   });
-
  
 });
