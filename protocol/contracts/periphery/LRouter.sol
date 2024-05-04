@@ -9,9 +9,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ILFactory} from "../interfaces/ILFactory.sol";
 import {LSwapPair} from "../LSwapPair.sol";
 
-
 import {LV1Library} from "../liberies/LV1Library.sol";
 
+import "hardhat/console.sol";
 
 /**
  * @title LSwap V1 Router
@@ -171,40 +171,52 @@ contract LRouter is ReentrancyGuard {
     //     IERC20().safeTransferETH(to, amountETH);
     // }
 
-    // **** SWAP ****
-    // requires the initial amount to have already been sent to the first pair
-    function _swap(uint[] memory amounts, address[] memory path, address _to) internal virtual {
-        for (uint i; i < path.length - 1; i++) {
-            (address input, address output) = (path[i], path[i + 1]);
+    // // **** SWAP ****
+    // // requires the initial amount to have already been sent to the first pair
+    // function _swap(uint[] memory amounts, address[] memory path, address _to) internal virtual {
+    //     for (uint i; i < path.length - 1; i++) {
+    //         (address input, address output) = (path[i], path[i + 1]);
             
-            address pair = ILFactory(FACTORY).getPool(input, output);
+    //         address pair = ILFactory(FACTORY).getPool(input, output);
 
-            (address token0,) = LV1Library.sortTokens(input, output);
+    //         console.log("====", pair);
 
-            uint amountOut = amounts[i + 1];
+    //         (address token0,) = LV1Library.sortTokens(input, output);
 
-            (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOut) : (amountOut, uint(0));
+    //         uint amountOut = amounts[i + 1];
+
+    //         (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOut) : (amountOut, uint(0));
             
-            address to = i < path.length - 2 ? ILFactory(FACTORY).getPool(output, path[i + 2]) : _to;
+    //         console.log("++", amount0Out, amount1Out);
+
+    //         address to = i < path.length - 2 ? ILFactory(FACTORY).getPool(output, path[i + 2]) : _to;
             
-            LSwapPair(pair).swap(amount0Out, amount1Out, to);
+    //         LSwapPair(pair).swap(amount0Out, amount1Out, to);
 
-        }
-    }
+    //     }
+    // }
 
-    function swapExactTokensForTokens(
+
+
+    function swapExactTokenForToken(
         uint amountIn,
         uint amountOutMin,
         address[] calldata path,
         address to,
         uint deadline
     ) external ensure(deadline) returns (uint[] memory amounts) {
-        amounts = LV1Library.getAmountsOut(FACTORY, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, ' INSUFFICIENT_OUTPUT_AMOUNT');
-        IERC20(path[0]).safeTransferFrom(
-            msg.sender, ILFactory(FACTORY).getPool(path[0], path[1]), amounts[0]
-        );
-        _swap(amounts, path, to);
+
+        bool isOutput0  =  path[0] > path[1];
+
+        address pair = ILFactory(FACTORY).getPool(path[0], path[1]);
+
+        IERC20(path[0]).safeTransferFrom(msg.sender, pair, amountIn);
+
+        uint amountOut = amountOutMin;
+
+        (uint amount0Out, uint amount1Out) = isOutput0 ? (uint(0), amountOut) : (amountOut, uint(0));
+  
+        LSwapPair(pair).swap(amount0Out, amount1Out, to);
     }
 
     // function swapTokensForExactTokens(

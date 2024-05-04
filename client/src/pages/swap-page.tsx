@@ -67,11 +67,13 @@ const SwapPage = () => {
             const { request } = await publicClient.simulateContract({
                 address: ROUTER,
                 abi: RouterAbi,
-                functionName: 'swapExactTokensForTokens',
+                functionName: 'swapExactTokenForToken',
                 args: [
-                    valueAToWei, valueBToWei * slippage, 
+                    valueAToWei, 
+                    valueBToWei * slippage, 
                     [tokenA?.address, tokenB?.address],
-                    address, Date.now()
+                    address, 
+                    Date.now() + 10000000000000
                 ],
                 account: address
             })
@@ -96,6 +98,10 @@ const SwapPage = () => {
         }
     
     }
+
+    useEffect(() => {
+        setValueB(String(Number(valueA) / 10))
+    }, [valueA])
 
     return (
         <div className="flex justify-center items-center h-full w-full">

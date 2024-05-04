@@ -236,7 +236,9 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
             
             }
 
-            (feesCollected0, feesCollected1,,) = _handleFees(amountInToken0, amountInToken1);
+            //(feesCollected0, feesCollected1,,) = _handleFees(amountInToken0, amountInToken1);
+
+            console.log("In", amountInToken0, amountInToken1);
 
             amountInToken0 -= feesCollected0;
             amountInToken1 -= feesCollected1;
@@ -244,14 +246,14 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
             // update reserves
             _update(amountInToken0, amountInToken1, amountToken0Out, amountToken1Out);
 
+            console.log("KI", initialReserve0 * initialReserve1, initialReserve0, initialReserve1);
+            console.log("KF", _reserve0 * _reserve1, _reserve0, _reserve1);
+
             //check for K
             if (initialReserve0 * initialReserve1 > _reserve0 * _reserve1) {
                 revert KInvariant();
             }
 
-            console.log("KI", initialReserve0 * initialReserve1, initialReserve0, initialReserve1);
-            console.log("KF", _reserve0 * _reserve1, _reserve0, _reserve1);
-            
         }
 
         emit Swap(msg.sender, amountInToken0, amountInToken1, amountToken0Out, amountToken1Out, to);
@@ -346,8 +348,8 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
         returns (uint256 feesCollected0, uint256 feesCollected1, uint256 feesLp0, uint256 feesLp1)
     {
 
-        feesCollected0 = (amountInToken0 * 99) / 10000;
-        feesCollected1 = (amountInToken1 * 99) / 10000;
+        feesCollected0 = (amountInToken0 * 1) / 100;
+        feesCollected1 = (amountInToken1 * 1) / 100;
 
         // lp fess is fixed 90% of the fees collected of total 99 bps
         feesLp0 = (feesCollected0 * 90) / 100;

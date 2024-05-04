@@ -9,7 +9,7 @@ describe("LRouter", function () {
   async function deploy() {
 
     // Contracts are deployed using the first signer/account by default
-    const [account1, otherAccount] = await hre.viem.getWalletClients();
+    const [account1, account2] = await hre.viem.getWalletClients();
 
     const MockERC20 = await hre.viem.deployContract("MockERC20", ["TUSD", "TUSD"])
 
@@ -23,7 +23,7 @@ describe("LRouter", function () {
 
     const publicClient = await hre.viem.getPublicClient();
 
-    return {  LFactory, LSwapPair, LRouter,  MockERC20, MockERC20_1, account1,  otherAccount, publicClient, };
+    return {  LFactory, LSwapPair, LRouter,  MockERC20, MockERC20_1, account1,  account2, publicClient, };
 
   }
 
@@ -138,6 +138,27 @@ describe("LRouter", function () {
       ]
 
       await LRouter.write.addLiquidity([input])
+
+    });
+    
+  });
+
+
+  describe("Swapping", function () {
+
+    it("Swapping should work", async function () {
+
+      const { LRouter, deposit, MockERC20, MockERC20_1, account2 } = await loadFixture(deployWithLiquidity);
+
+      await LRouter.write.swapExactTokenForToken(
+        [
+          deposit/100n, deposit/10000n,
+          [MockERC20.address, MockERC20_1.address],
+          account2.account.address,
+          10000000000000000000n
+        ]
+     )
+
 
     });
     
