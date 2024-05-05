@@ -28,6 +28,16 @@ contract LRouter is ReentrancyGuard {
 
     using SafeERC20 for IERC20;
 
+    struct Pool {
+        address pool;
+        address token0;
+        address token1;
+        uint reserve0;
+        uint reserve1;
+        // uint fees0;
+        // uint fees1;
+    }
+
     struct AddLiquidity {
         address tokenA;
         address tokenB;
@@ -220,6 +230,35 @@ contract LRouter is ReentrancyGuard {
         (uint amount0Out, uint amount1Out) = isOutput0 ? (uint(0), amountOut) : (amountOut, uint(0));
   
         LSwapPair(pair).swap(amount0Out, amount1Out, to);
+    }
+
+    function getAmmPools(address owner) external returns (Pool [] memory allPools) {
+
+        uint length = pools.length;
+
+        allPools = new Pool[] (length);
+
+        for (uint i = 0;  i < length; i++) {
+
+            LSwapPair pool = LSwapPair(pools[i]);
+
+            (address token0, address token1) = pool.getTokens();
+
+            (uint reserve0, uint reserve1) = pool.getReserves();
+
+            allPools[i] = Pool({
+                pool: address(pool),
+                token0: token0,
+                token1: token1,
+                reserve0: reserve0,
+                reserve1: reserve1
+                // uint fees0;
+                // uint fees1;
+            });
+        
+
+        }
+
     }
 
     // function swapTokensForExactTokens(

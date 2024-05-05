@@ -29,3 +29,12 @@ export const DEFAULT_TOKENS: IToken[] = [
         icon: "/coin/dai.jpg"
     }
 ]
+
+
+
+export const ADDRESS_TO_SYMBOL = {
+    [import.meta.env.VITE_USDC]: "TUSDC",
+    [import.meta.env.VITE_USDT]: "TUSDT",
+    [import.meta.env.VITE_WBTC]: "TWBTC",
+    [import.meta.env.VITE_DAI]: "TDAI"
+}

@@ -19,6 +19,8 @@ contract LFactory is ILFactory {
     using Clones for address;
     using SafeERC20 for IERC20;
 
+    uint public constant YEAR = 365 days;
+
     address public immutable PAIR_REFERENCE;
 
     mapping(address => mapping(address => address)) private pairs;
@@ -122,7 +124,7 @@ contract LFactory is ILFactory {
     }
 
 
-    function repay(address collateral, address tokenToBorrow, uint index, uint amount) external checkLoan(msg.sender, collateral) {
+    function repay(address collateral, address tokenToBorrow, uint index, uint amount) public checkLoan(msg.sender, collateral) {
 
         address borrower = msg.sender;
 
@@ -130,24 +132,34 @@ contract LFactory is ILFactory {
 
         LoanMarket storage loan = userLoans[borrower][collateral][index];
 
-        uint interest = loan.accruedInterest + (block.timestamp - loan.borrowedAt) * loan.interest * loan.amount;
+        uint interest = loan.accruedInterest + ((block.timestamp - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR);
 
-        uint totalDebt = loan.amount + interest;
+        (uint debtToPay, uint interestToPay) = _splitRepayment(loan.amount, interest, amount);
 
-        if (totalDebt < amount) {
+        LSwapPair(ammPool).repay(tokenToBorrow, borrower, debtToPay, interestToPay);
+
+        if ((loan.amount + interest) < amount) {
             uint length = getUserLoans(collateral, tokenToBorrow).length;
-            userLoans[borrower][collateral][index] = userLoans[borrower][collateral];
+            if (length > 1) userLoans[borrower][collateral][index] = userLoans[borrower][collateral][length - 1];
             userLoans[borrower][collateral].pop();
-            LSwapPair(ammPool).repay(tokenToBorrow, borrower, amount, totalDebt - amount);
         } else {
-            loan.borrowedAt = block.timestamp;
-
+            loan.borrowedAt = uint64(block.timestamp);
+            loan.accruedInterest += (interest - interestToPay);
+            loan.amount -= debtToPay;
         }
-
-
 
     }
 
+    function repayFull(address collateral, address tokenToBorrow, uint index) external checkLoan(msg.sender, collateral) {
+
+        
+    }
+
+    function _splitRepayment (uint currentDebt, uint accruedInterest, uint paymentAmount) internal  returns (uint debt, uint interest){
+        uint totalDebt = currentDebt + accruedInterest;
+        debt = ((currentDebt * paymentAmount) / totalDebt);
+        interest = paymentAmount - debt;
+    }
 
     function _checkLoan(address borrower, address collateral) internal {
 

@@ -442,6 +442,10 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
         pendingProtocolFees1 = _pendingProtocolFees1;
     }
 
+    function getTokens() external view returns (address, address) {
+        return (_token0, _token1);
+    }
+
     function getFACTORY() external view returns (address) {
         return FACTORY;
     }

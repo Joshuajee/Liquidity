@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "test": "npx hardhat test",
-    "deploy:local": "npx hardhat ignition deploy ./ignition/modules/Liquidity.ts --network localhost"
+    "deploy:local": "npx hardhat ignition deploy ./ignition/modules/Liquidity.ts --network localhost",
+    "action:local": "npx hardhat ignition deploy ./ignition/modules/Operations.ts --network localhost"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^0.15.0",
