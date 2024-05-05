@@ -240,6 +240,95 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "borrower",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "collateral",
+        "type": "address"
+      }
+    ],
+    "name": "getUserLoans",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "ammPool",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "collateralPool",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenBorrowed",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "accruedInterest",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "interestRate",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint64",
+            "name": "borrowedAt",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct ILFactory.LoanMarket[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "collateral",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "tokenToBorrow",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "repay",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "",
         "type": "address"
       },
@@ -254,7 +343,7 @@
         "type": "uint256"
       }
     ],
-    "name": "userLoan",
+    "name": "userLoans",
     "outputs": [
       {
         "internalType": "address",
@@ -274,6 +363,11 @@
       {
         "internalType": "uint256",
         "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "accruedInterest",
         "type": "uint256"
       },
       {

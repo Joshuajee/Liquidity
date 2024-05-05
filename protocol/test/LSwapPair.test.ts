@@ -119,7 +119,7 @@ describe("LSwapPair", function () {
 
       const deposit_ = parseEther("10", "wei")
 
-      const fee = deposit_ * 99n / 10000n
+      const fee = deposit_ * 1n / 100n
 
       const amountOut = deposit_ * 2n / 3n
 

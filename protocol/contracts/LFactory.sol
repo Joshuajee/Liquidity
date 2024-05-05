@@ -25,7 +25,7 @@ contract LFactory is ILFactory {
     mapping(address => address) private collateralPools;
 
     //mapping of user to collateral, to loan MarketStruct
-    mapping(address => mapping(address => LoanMarket[])) public userLoan;
+    mapping(address => mapping(address => LoanMarket[])) public userLoans;
 
     constructor(address swapPool)  {
         PAIR_REFERENCE = swapPool;
@@ -109,11 +109,12 @@ contract LFactory is ILFactory {
 
         LSwapPair(ammPool).borrow(tokenToBorrow, borrower, amount);
 
-        userLoan[borrower][collateral].push(LoanMarket({
+        userLoans[borrower][collateral].push(LoanMarket({
             ammPool: ammPool,
             collateralPool: collateralPool,
             tokenBorrowed: tokenToBorrow,
             amount: amount,
+            accruedInterest: 0,
             interestRate: 1,
             borrowedAt: uint64(block.timestamp)
         }));
@@ -121,9 +122,36 @@ contract LFactory is ILFactory {
     }
 
 
+    function repay(address collateral, address tokenToBorrow, uint index, uint amount) external checkLoan(msg.sender, collateral) {
+
+        address borrower = msg.sender;
+
+        address ammPool = getPool(collateral, tokenToBorrow);
+
+        LoanMarket storage loan = userLoans[borrower][collateral][index];
+
+        uint interest = loan.accruedInterest + (block.timestamp - loan.borrowedAt) * loan.interest * loan.amount;
+
+        uint totalDebt = loan.amount + interest;
+
+        if (totalDebt < amount) {
+            uint length = getUserLoans(collateral, tokenToBorrow).length;
+            userLoans[borrower][collateral][index] = userLoans[borrower][collateral];
+            userLoans[borrower][collateral].pop();
+            LSwapPair(ammPool).repay(tokenToBorrow, borrower, amount, totalDebt - amount);
+        } else {
+            loan.borrowedAt = block.timestamp;
+
+        }
+
+
+
+    }
+
+
     function _checkLoan(address borrower, address collateral) internal {
 
-        LoanMarket [] memory loans = userLoan[borrower][collateral];
+        LoanMarket [] memory loans = userLoans[borrower][collateral];
         if (loans.length > 256) revert("Too many loans on a collateral");
 
         uint totalLTV;
@@ -133,8 +161,10 @@ contract LFactory is ILFactory {
             totalLTV += 1;
         }
 
+    }
 
-
+    function getUserLoans (address borrower, address collateral) public returns (LoanMarket[] memory) {
+        return userLoans[borrower][collateral];
     }
 
 

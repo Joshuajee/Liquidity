@@ -67,7 +67,13 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     event Burn(address, uint256, uint256, address);
     event Swap(address, uint256, uint256, uint256, uint256, address);
     event Borrow(address indexed tokenToBorrow, address indexed borrower, uint amount); 
+    event Repay(address indexed tokenToRepay, address indexed borrower, uint debt, uint interest); 
 
+
+    modifier isFactory() {
+        if (msg.sender != FACTORY) revert OnlyFactory();
+        _;
+    }
 
     /* ----------------------------- EXTERNAL FUNCTIONS ----------------------------- */
     function initialize(address token0, address token1) external {
@@ -212,7 +218,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
                 revert InsufficientOutputAmount();
             }
             
-            (uint initialReserve0, uint initialReserve1) = _getActualReserves();
+            (uint initialReserve0, uint initialReserve1) = getActualReserves();
 
             if (amountToken0Out > initialReserve0 || amountToken1Out > initialReserve1) {
                 revert InsufficientAmountOut();
@@ -236,7 +242,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
             
             }
 
-            //(feesCollected0, feesCollected1,,) = _handleFees(amountInToken0, amountInToken1);
+            (feesCollected0, feesCollected1,,) = _handleFees(amountInToken0, amountInToken1);
 
             console.log("In", amountInToken0, amountInToken1);
 
@@ -259,9 +265,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
         emit Swap(msg.sender, amountInToken0, amountInToken1, amountToken0Out, amountToken1Out, to);
     }
 
-    function borrow(address tokenToBorrow, address borrower, uint amount) external {
-
-        if (msg.sender != FACTORY) revert OnlyFactory();
+    function borrow(address tokenToBorrow, address borrower, uint amount) external isFactory {
 
         if (tokenToBorrow == _token0) {
             IERC20(_token0).safeTransfer(borrower, amount);
@@ -277,8 +281,19 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
     }
 
+    function repay(address tokenToRepay, address borrower, uint debt, uint interest) external isFactory {
+        if (tokenToRepay == _token0) {
+            _actualReserve0 += debt; 
+            _handleFeesCore(interest, 0);
+        } else {
+            _actualReserve1 += debt;
+            _handleFeesCore(0, interest);
+        }
+        emit Repay(tokenToRepay, borrower, debt, interest);
+    }
+
     /// @notice the real amount of tokens stored in the pool
-    function _getActualReserves() internal view returns (uint reserveToken0, uint reserveToken1) {
+    function getActualReserves() public view returns (uint reserveToken0, uint reserveToken1) {
         reserveToken0 = _actualReserve0;
         reserveToken1 = _actualReserve1;
     }
@@ -351,6 +366,16 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
         feesCollected0 = (amountInToken0 * 1) / 100;
         feesCollected1 = (amountInToken1 * 1) / 100;
 
+        _handleFeesCore(feesCollected0, feesCollected1);
+
+    }
+
+
+    function _handleFeesCore(uint256 feesCollected0, uint256 feesCollected1)
+        internal
+        returns (uint256 feesLp0, uint256 feesLp1)
+    {
+
         // lp fess is fixed 90% of the fees collected of total 99 bps
         feesLp0 = (feesCollected0 * 90) / 100;
         feesLp1 = (feesCollected1 * 90) / 100;
@@ -362,6 +387,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
         _pendingLiquidityFees1 += feesLp1;
 
     }
+
 
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {

@@ -8,6 +8,7 @@ interface ILFactory {
 
         address tokenBorrowed;
         uint amount;
+        uint accruedInterest;
         uint8 interestRate;
         uint64 borrowedAt;
     }

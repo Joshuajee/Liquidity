@@ -22,6 +22,8 @@ import "hardhat/console.sol";
  */
 contract LRouter is ReentrancyGuard {
 
+    address [] public pools;
+
     error Expired();
 
     using SafeERC20 for IERC20;
@@ -71,6 +73,7 @@ contract LRouter is ReentrancyGuard {
             // create the pair if it doesn't exist yet
             if (pair == address(0)) {
                 pair = ILFactory(FACTORY).createPair(params.tokenA, params.tokenB);
+                pools.push(pair);
             }   
 
             (reserveA, reserveB) = LV1Library.getReserves(pair, params.tokenA, params.tokenB);
