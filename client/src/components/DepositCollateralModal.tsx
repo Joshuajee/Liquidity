@@ -12,6 +12,7 @@ interface IProps {
     token: Address;
     symbol: string;
     close: () => void;
+    type: "deposit" | "withdraw" | "borrow" | "repay"
 }
 
 const DepositCollateralModal = ({ token, close } : IProps) => {
@@ -44,6 +45,8 @@ const DepositCollateralModal = ({ token, close } : IProps) => {
             await walletClient.writeContract(request)
 
             toast.success("Deposit successful")
+
+            close()
 
         } catch (e) {
             toast.error((e as any)?.shortMessage)

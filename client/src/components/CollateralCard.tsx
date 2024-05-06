@@ -7,6 +7,8 @@ import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import ModalWrapper from "./ModalWrapper"
 import DepositCollateralModal from "./DepositCollateralModal"
+import { weiToCurrency } from "@/lib/utils"
+import { FACTORY } from "@/lib/constants"
 
 
 const CollateralCard = ({ symbol, token } : { symbol: string, token: Address }) => {
@@ -21,6 +23,7 @@ const CollateralCard = ({ symbol, token } : { symbol: string, token: Address }) 
 
     const collateralPool = useReadContract({
         abi: FactoryAbi,
+        address: FACTORY,
         functionName: "getCollateralPool",
         args: [token],
         account: address,
@@ -30,10 +33,13 @@ const CollateralCard = ({ symbol, token } : { symbol: string, token: Address }) 
     const balanceOf = useReadContract({
         abi: CollateralAbi,
         functionName: "balanceOf",
+        address: collateralPool.data as Address,
         args: [address],
         account: address,
         chainId: chain?.id
     })
+
+    const balance = (balanceOf as any).data || 0n
 
     useEffect(() => {
         if (collateralPool.isSuccess) {
@@ -54,6 +60,14 @@ const CollateralCard = ({ symbol, token } : { symbol: string, token: Address }) 
 
     console.log({collateral})
 
+    console.log({balance})
+
+    const handleClose = () => {
+        setDeposit(false)
+        setWithdraw(false)
+        balanceOf.refetch()
+    }
+
 
     return (
         <>
@@ -61,7 +75,7 @@ const CollateralCard = ({ symbol, token } : { symbol: string, token: Address }) 
                                     
                 <p> {symbol} </p>
 
-                <p>Balance: </p>
+                <p>Balance: {weiToCurrency(balance)} {symbol}</p>
 
                 <div className="flex justify-center">
 
@@ -80,16 +94,16 @@ const CollateralCard = ({ symbol, token } : { symbol: string, token: Address }) 
 
             </div>
 
-            <ModalWrapper open={deposit} close={() => setDeposit(false)}>
+            <ModalWrapper open={deposit} close={handleClose}>
 
-                <DepositCollateralModal symbol="" token={token as Address} close={() => setDeposit(true)} />
+                <DepositCollateralModal symbol="" token={token as Address} close={handleClose} />
 
             </ModalWrapper>
 
 
-            <ModalWrapper open={withdraw} close={() => setWithdraw(false)}>
+            <ModalWrapper open={withdraw} close={handleClose}>
 
-                <DepositCollateralModal symbol="" token={token as Address} close={() => setWithdraw(true)} />
+                <DepositCollateralModal symbol="" token={token as Address} close={handleClose} />
 
             </ModalWrapper>
 

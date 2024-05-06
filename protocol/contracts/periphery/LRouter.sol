@@ -196,11 +196,14 @@ contract LRouter is ReentrancyGuard {
 
         address collateral =  ILFactory(FACTORY).getCollateralPool(address(token));
 
+        token.safeTransferFrom(msg.sender, address(this), assets);
+
         if (collateral == address(0)) {
+            token.approve(FACTORY, assets);
             collateral = ILFactory(FACTORY).createCollateralPool(token, assets, receiver); 
-            token.safeTransferFrom(msg.sender, collateral, assets);
             collateralPools.push(collateral);
         } else {
+            token.approve(collateral, assets);
             LCollateralPool(collateral).deposit(assets, receiver);
         }
 

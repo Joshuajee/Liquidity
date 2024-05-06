@@ -163,5 +163,20 @@ describe("LRouter", function () {
     });
     
   });
+
+
+
+  describe("Collateral", function () {
+
+    it("Depositing Collateral", async function () {
+
+      const { LRouter, deposit, MockERC20, MockERC20_1, account1 } = await loadFixture(deployWithLiquidity);
+
+      await LRouter.write.depositCollateral([ MockERC20.address, deposit, account1.account.address])
+
+
+    });
+    
+  });
  
 });
