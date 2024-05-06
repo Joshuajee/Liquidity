@@ -20,3 +20,7 @@ export function getPair (token0: Address, token1: Address) {
 
   return {symbol1, symbol2}
 }
+
+export const getTokenName = (token: Address) => {
+  return ADDRESS_TO_SYMBOL[token as any]
+}

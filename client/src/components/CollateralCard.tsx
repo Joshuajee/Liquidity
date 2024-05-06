@@ -3,29 +3,39 @@ import CollateralAbi from "@/abi/contracts/LCollateralPool.sol/LCollateralPool.j
 import useCurrentChain from "@/hooks/useCurrentChain"
 import FactoryAbi from "@/abi/contracts/LFactory.sol/LFactory.json"
 import { Address } from "viem"
-import { useEffect, useState } from "react"
-import { toast } from "react-toastify"
+import { useMemo, useState } from "react"
 import ModalWrapper from "./ModalWrapper"
-import DepositCollateralModal from "./DepositCollateralModal"
-import { weiToCurrency } from "@/lib/utils"
+import LendingModal from "./LendingModal"
+import { getTokenName, weiToCurrency } from "@/lib/utils"
 import { FACTORY } from "@/lib/constants"
+import LSwapPairAbi from "@/abi/contracts/LSwapPair.sol/LSwapPair.json"
 
 
-const CollateralCard = ({ symbol, token } : { symbol: string, token: Address }) => {
+const CollateralCard = ({ collateralToken, tokenToBorrow } : { symbol: string, collateralToken: Address, tokenToBorrow: Address }) => {
 
     const { address } = useAccount() 
     const chain = useCurrentChain()
 
-    const [deposit, setDeposit] = useState(false)
-    const [withdraw, setWithdraw] = useState(false)
+    const collateralSymbol = useMemo(() => getTokenName(collateralToken), [collateralToken])
 
-    const [collateral, setCollateral] = useState<Address | undefined>()
+    const [deposit, setDeposit] = useState(false)
+    const [borrow, setBorrow] = useState(false)
+    const [withdraw, setWithdraw] = useState(false)
 
     const collateralPool = useReadContract({
         abi: FactoryAbi,
         address: FACTORY,
         functionName: "getCollateralPool",
-        args: [token],
+        args: [collateralToken],
+        account: address,
+        chainId: chain?.id
+    })
+
+    const ammPool = useReadContract({
+        abi: FactoryAbi,
+        address: FACTORY,
+        functionName: "getPool",
+        args: [collateralToken, tokenToBorrow],
         account: address,
         chainId: chain?.id
     })
@@ -39,43 +49,36 @@ const CollateralCard = ({ symbol, token } : { symbol: string, token: Address }) 
         chainId: chain?.id
     })
 
+    const balanceOfAmm = useReadContract({
+        abi: LSwapPairAbi,
+        functionName: "balanceOf",
+        address: ammPool.data as Address,
+        args: [address],
+        account: address,
+        chainId: chain?.id
+    })
+
     const balance = (balanceOf as any).data || 0n
 
-    useEffect(() => {
-        if (collateralPool.isSuccess) {
-            setCollateral(collateralPool.data as Address)
-        }
-
-        if (collateralPool.isError) {
-            setCollateral(undefined)
-            toast.error(collateralPool.error.shortMessage)
-        }
-        
-
-    }, [collateralPool.isSuccess, collateralPool.data, collateralPool.isError, collateralPool.error])
-
-    console.log({collateralPool})
-
-    console.log({balanceOf})
-
-    console.log({collateral})
-
-    console.log({balance})
+    const ammBalance = (balanceOfAmm as any).data || 0n
 
     const handleClose = () => {
         setDeposit(false)
         setWithdraw(false)
+        setBorrow(false)
         balanceOf.refetch()
     }
+
+    console.log("AMM: ", ammPool?.data)
 
 
     return (
         <>
-            <div className="flex flex-col gap-2 font-bold p-3 bg-[#383838]  rounded-lg my-3 w-full">
+            <div className="flex flex-col gap-2 font-bold p-3 bg-[#383838]  rounded-xl my-3 w-full">
                                     
-                <p> {symbol} </p>
+                <p> {collateralSymbol} </p>
 
-                <p>Balance: {weiToCurrency(balance)} {symbol}</p>
+                <p>Balance: {weiToCurrency(balance)} {collateralSymbol}</p>
 
                 <div className="flex justify-center">
 
@@ -94,18 +97,47 @@ const CollateralCard = ({ symbol, token } : { symbol: string, token: Address }) 
 
             </div>
 
+
+            <div className="flex flex-col gap-2 font-bold p-3 bg-[#383838]  rounded-xl my-3 w-full">
+                                    
+                <p> AMM Token </p>
+
+                <p>Balance: {weiToCurrency(ammBalance)} </p>
+
+            </div>
+
+
+            <div className="flex justify-center">
+
+                <button 
+                    onClick={() => setBorrow(true)}
+                    className="bg-blue-700 px-3 w-36 py-2 rounded-lg">
+                    Borrow
+                </button>
+
+            </div>
+
             <ModalWrapper open={deposit} close={handleClose}>
 
-                <DepositCollateralModal symbol="" token={token as Address} close={handleClose} />
+                <LendingModal type="deposit" symbol={""} collateral={collateralToken} token={tokenToBorrow as Address} close={handleClose} />
+
+            </ModalWrapper>
+
+
+            <ModalWrapper open={borrow} close={handleClose}>
+
+                <LendingModal type="borrow" symbol="" collateral={collateralToken} token={tokenToBorrow as Address} close={handleClose} />
 
             </ModalWrapper>
 
 
             <ModalWrapper open={withdraw} close={handleClose}>
 
-                <DepositCollateralModal symbol="" token={token as Address} close={handleClose} />
+                <LendingModal type="withdraw" symbol="" collateral={collateralToken} token={tokenToBorrow as Address} close={handleClose} />
 
             </ModalWrapper>
+
+            
 
         </>
     )

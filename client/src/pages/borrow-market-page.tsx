@@ -4,11 +4,7 @@ import { Address } from "viem"
 
 const BorrowMarketPage = () => {
 
-
     const { collateral, token } = useParams()
-
-    console.log({token})
-
 
     return (
         <div className="h-full w-full px-10 pt-20">
@@ -19,7 +15,11 @@ const BorrowMarketPage = () => {
 
                     <h2>Collaterals</h2>
 
-                    <CollateralCard symbol={"debtInfo.collateral.symbol"} token={collateral as Address}/>
+                    <CollateralCard 
+                        symbol={"debtInfo.collateral.symbol"} 
+                        collateralToken={collateral as Address}
+                        tokenToBorrow={token as Address}
+                        />
 
 
 
