@@ -18,5 +18,5 @@ export function getPair (token0: Address, token1: Address) {
   const symbol1 = ADDRESS_TO_SYMBOL[token0 as any]
   const symbol2 = ADDRESS_TO_SYMBOL[token1 as any]
 
-  return `${symbol1}/${symbol2}`
+  return {symbol1, symbol2}
 }

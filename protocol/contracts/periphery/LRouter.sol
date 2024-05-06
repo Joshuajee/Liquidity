@@ -8,6 +8,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 import {ILFactory} from "../interfaces/ILFactory.sol";
 import {LSwapPair} from "../LSwapPair.sol";
+import {LCollateralPool} from "../LCollateralPool.sol";
 
 import {LV1Library} from "../liberies/LV1Library.sol";
 
@@ -23,6 +24,7 @@ import "hardhat/console.sol";
 contract LRouter is ReentrancyGuard {
 
     address [] public pools;
+    address [] public collateralPools;
 
     error Expired();
 
@@ -162,53 +164,6 @@ contract LRouter is ReentrancyGuard {
         require(amountA >= amountAMin, ' INSUFFICIENT_A_AMOUNT');
         require(amountB >= amountBMin, ' INSUFFICIENT_B_AMOUNT');
     }
-    // function removeLiquidityETH(
-    //     address token,
-    //     uint liquidity,
-    //     uint amountTokenMin,
-    //     uint amountETHMin,
-    //     address to,
-    //     uint deadline
-    // ) public virtual override ensure(deadline) returns (uint amountToken, uint amountETH) {
-    //     (amountToken, amountETH) = removeLiquidity(
-    //         token,
-    //         WETH,
-    //         liquidity,
-    //         amountTokenMin,
-    //         amountETHMin,
-    //         address(this),
-    //         deadline
-    //     );
-    //     IERC20().safeTransfer(token, to, amountToken);
-    //     IWETH(WETH).withdraw(amountETH);
-    //     IERC20().safeTransferETH(to, amountETH);
-    // }
-
-    // // **** SWAP ****
-    // // requires the initial amount to have already been sent to the first pair
-    // function _swap(uint[] memory amounts, address[] memory path, address _to) internal virtual {
-    //     for (uint i; i < path.length - 1; i++) {
-    //         (address input, address output) = (path[i], path[i + 1]);
-            
-    //         address pair = ILFactory(FACTORY).getPool(input, output);
-
-    //         console.log("====", pair);
-
-    //         (address token0,) = LV1Library.sortTokens(input, output);
-
-    //         uint amountOut = amounts[i + 1];
-
-    //         (uint amount0Out, uint amount1Out) = input == token0 ? (uint(0), amountOut) : (amountOut, uint(0));
-            
-    //         console.log("++", amount0Out, amount1Out);
-
-    //         address to = i < path.length - 2 ? ILFactory(FACTORY).getPool(output, path[i + 2]) : _to;
-            
-    //         LSwapPair(pair).swap(amount0Out, amount1Out, to);
-
-    //     }
-    // }
-
 
 
     function swapExactTokenForToken(
@@ -231,6 +186,29 @@ contract LRouter is ReentrancyGuard {
   
         LSwapPair(pair).swap(amount0Out, amount1Out, to);
     }
+
+
+
+    //Collateral
+
+
+    function depositCollateral(IERC20 token, uint assets, address receiver) external virtual returns (uint amountA, uint amountB, address pair) {
+
+        address collateral =  ILFactory(FACTORY).getCollateralPool(address(token));
+
+        if (collateral == address(0)) {
+            collateral = ILFactory(FACTORY).createCollateralPool(token, assets, receiver); 
+            token.safeTransferFrom(msg.sender, collateral, assets);
+            collateralPools.push(collateral);
+        } else {
+            LCollateralPool(collateral).deposit(assets, receiver);
+        }
+
+    }
+
+
+
+    // Getters
 
     function getAmmPools(address owner) external returns (Pool [] memory allPools) {
 
