@@ -9,6 +9,7 @@ import {ILFactory} from "./interfaces/ILFactory.sol";
 import "./LSwapPair.sol";
 
 import "./LCollateralPool.sol";
+import {LSlidingWindowOracle} from  "./utils/LSlidingWindowOracle.sol";
 import "hardhat/console.sol";
 
 
@@ -24,6 +25,8 @@ contract LFactory is ILFactory {
     uint public constant YEAR = 365 days;
 
     address public immutable PAIR_REFERENCE;
+
+    LSlidingWindowOracle public oracle;
 
     mapping(address => mapping(address => address)) private pairs;
     mapping(address => address) private collateralPools;
@@ -139,17 +142,17 @@ contract LFactory is ILFactory {
 
         (uint112 debtToPay, uint112 interestToPay) = _splitRepayment(loan.amount, interest, amount);
 
-        //LSwapPair(ammPool).repay(tokenToBorrow, borrower, debtToPay, interestToPay);
+        LSwapPair(ammPool).repay(tokenToBorrow, borrower, debtToPay, interestToPay);
 
-        // if ((loan.amount + interest) < amount) {
-        //     uint length = getUserLoans(collateral, tokenToBorrow).length;
-        //     if (length > 1) userLoans[borrower][collateral][index] = userLoans[borrower][collateral][length - 1];
-        //     userLoans[borrower][collateral].pop();
-        // } else {
-        //     loan.borrowedAt = uint32(block.timestamp);
-        //     loan.accruedInterest += (interest - interestToPay);
-        //     loan.amount -= debtToPay;
-        // }
+        if ((loan.amount + interest) < amount) {
+            uint length = getUserLoans(collateral, tokenToBorrow).length;
+            if (length > 1) userLoans[borrower][collateral][index] = userLoans[borrower][collateral][length - 1];
+            userLoans[borrower][collateral].pop();
+        } else {
+            loan.borrowedAt = uint32(block.timestamp);
+            loan.accruedInterest += (interest - interestToPay);
+            loan.amount -= debtToPay;
+        }
 
     }
 
@@ -157,6 +160,17 @@ contract LFactory is ILFactory {
 
         
     }
+
+
+    function update(address tokenA, address tokenB) public {
+        address pair = ILFactory(address(this)).getPool(tokenA, tokenB);
+        oracle.update(pair);
+    }
+
+    function update(address pair) external {
+        oracle.update(pair);
+    }
+
 
     function _splitRepayment (uint112 currentDebt, uint112 accruedInterest, uint112 paymentAmount) internal  returns (uint112 debt, uint112 interest){
         uint112 totalDebt = currentDebt + accruedInterest;
@@ -197,6 +211,12 @@ contract LFactory is ILFactory {
             totalLTV += 1;
         }
 
+    }
+
+
+
+    function setOracle(LSlidingWindowOracle _oracle) external {
+        oracle = _oracle;
     }
 
 

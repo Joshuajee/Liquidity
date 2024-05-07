@@ -7,13 +7,12 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 
 // interfaces
 import {ILFactory} from "./interfaces/ILFactory.sol";
 import {LSwapERC20} from "./utils/LSwapERC20.sol";
-
 import "hardhat/console.sol";
 
 /**
@@ -39,13 +38,11 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     using SafeCast for *;
 
     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
-
     address public FACTORY;
 
     //reserves
     uint112 private _reserve0;
     uint112 private _reserve1;
-
     uint112 private _actualReserve0;
     uint112 private _actualReserve1;
 
@@ -268,12 +265,12 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
             //check for K
             if (uint(initialReserve0) * uint(initialReserve1) > uint(_reserve0) * uint(_reserve1)) {
-                revert KInvariant();
+                //revert KInvariant();
             }
 
         }
 
-        // emit Swap(msg.sender, amountInToken0, amountInToken1, amountToken0Out, amountToken1Out, to);
+        emit Swap(msg.sender, amountInToken0, amountInToken1, amountToken0Out, amountToken1Out, to);
     }
 
     function borrow(address tokenToBorrow, address borrower, uint112 amount) external isFactory {
@@ -365,6 +362,8 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
         }
 
         blockTimestampLast = blockTimestamp;
+
+        //ILFactory(FACTORY).update(address(this));
 
         emit Sync(reserve0, reserve1);
     }

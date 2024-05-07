@@ -21,6 +21,10 @@ describe("LRouter", function () {
 
     const LRouter = await hre.viem.deployContract("LRouter", [LFactory.address, LSwapPair.address])
 
+    const LOracle = await hre.viem.deployContract("LSlidingWindowOracle", [LFactory.address, 3600, 60])
+
+    await LFactory.write.setOracle([LOracle.address])
+    
     const publicClient = await hre.viem.getPublicClient();
 
     return {  LFactory, LSwapPair, LRouter,  MockERC20, MockERC20_1, account1,  account2, publicClient, };

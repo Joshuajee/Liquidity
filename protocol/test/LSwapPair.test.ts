@@ -19,6 +19,10 @@ describe("LSwapPair", function () {
 
     const LFactory = await hre.viem.deployContract("LFactory", [LSwapPair.address])
 
+    const LOracle = await hre.viem.deployContract("LSlidingWindowOracle", [LFactory.address, 3600, 60])
+
+    await LFactory.write.setOracle([LOracle.address])
+
     await LFactory.write.createPair([MockERC20.address, MockERC20_1.address])
 
     const poolAddress = await LFactory.read.getPool([MockERC20.address, MockERC20_1.address])
@@ -139,7 +143,7 @@ describe("LSwapPair", function () {
 
       await MockERC20.write.transfer([LSwapPairPool.address, deposit_]) 
 
-      await LSwapPairPool.write.swap([amountOut, 0n, account2.account.address])
+      await LSwapPairPool.write.swap([0n, amountOut, account2.account.address])
 
       // should be equal to amount out after swap
       expect(await MockERC20_1.read.balanceOf([account2.account.address])).to.be.equal(amountOut)

@@ -18,6 +18,10 @@ describe("LFactory", function () {
 
     const LFactory = await hre.viem.deployContract("LFactory", [LSwapPair.address])
 
+    const LOracle = await hre.viem.deployContract("LSlidingWindowOracle", [LFactory.address, 3600, 60])
+
+    await LFactory.write.setOracle([LOracle.address])
+
     const publicClient = await hre.viem.getPublicClient();
 
     return {  LFactory, LSwapPair,  MockERC20, MockERC20_1, account1,  otherAccount, publicClient, };
