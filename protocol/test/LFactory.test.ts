@@ -1,14 +1,15 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
-import { checksumAddress, parseEther, zeroAddress } from "viem";
+import { checksumAddress, maxUint256, parseEther, zeroAddress } from "viem";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("LFactory", function () {
 
   async function deploy() {
 
     // Contracts are deployed using the first signer/account by default
-    const [account1, otherAccount] = await hre.viem.getWalletClients();
+    const [account1, account2] = await hre.viem.getWalletClients();
 
     const MockERC20 = await hre.viem.deployContract("MockERC20", ["TUSD", "TUSD"])
 
@@ -18,13 +19,17 @@ describe("LFactory", function () {
 
     const LFactory = await hre.viem.deployContract("LFactory", [LSwapPair.address])
 
-    const LOracle = await hre.viem.deployContract("LSlidingWindowOracle", [LFactory.address, 3600, 60])
+    const LOracle = await hre.viem.deployContract("LSlidingWindowOracle", [LFactory.address, 3600, 2])
 
     await LFactory.write.setOracle([LOracle.address])
 
+    await MockERC20.write.approve([LFactory.address, maxUint256])
+
+    await MockERC20_1.write.approve([LFactory.address, maxUint256])
+
     const publicClient = await hre.viem.getPublicClient();
 
-    return {  LFactory, LSwapPair,  MockERC20, MockERC20_1, account1,  otherAccount, publicClient, };
+    return {  LFactory, LSwapPair,  MockERC20, MockERC20_1, account1, account2, publicClient, };
 
   }
 
@@ -56,10 +61,6 @@ describe("LFactory", function () {
 
     const deposit = parseEther("100000", "wei")
 
-    await MockERC20.write.approve([LFactory.address, deposit * 2n])
-
-    await MockERC20_1.write.approve([LFactory.address, deposit])
-
     await LFactory.write.createPair([MockERC20.address, MockERC20_1.address])
 
     const poolAddress = await LFactory.read.getPool([MockERC20.address, MockERC20_1.address])
@@ -67,9 +68,22 @@ describe("LFactory", function () {
     const LSwapPairPool = await hre.viem.getContractAt("LSwapPair", poolAddress)
 
     await MockERC20.write.transfer([LSwapPairPool.address, deposit]) 
+
     await MockERC20_1.write.transfer([LSwapPairPool.address, deposit]) 
 
     await LSwapPairPool.write.mint([account1.account.address])
+
+    await MockERC20.write.transfer([LSwapPairPool.address, deposit / 100n]) 
+
+    await LSwapPairPool.write.swap([deposit / 10000n, 0n, data.account2.account.address])
+
+    await MockERC20.write.transfer([LSwapPairPool.address, deposit / 100n]) 
+
+    await LSwapPairPool.write.swap([deposit / 10000n, 0n, data.account2.account.address])
+
+    await MockERC20.write.transfer([LSwapPairPool.address, deposit / 100n]) 
+
+    await LSwapPairPool.write.swap([deposit / 10000n, 0n, data.account2.account.address])
 
     await LFactory.write.createCollateralPool([MockERC20.address, deposit, account1.account.address])
 
@@ -78,6 +92,10 @@ describe("LFactory", function () {
     await MockERC20.write.approve([LCollateralPool.address, deposit]);
 
     await LCollateralPool.write.deposit([deposit, data.account1.account.address])
+
+    await LFactory.write.update([LSwapPairPool.address])
+
+    await LFactory.write.update([LSwapPairPool.address])
 
     return {...data, LCollateralPool, LSwapPairPool }
 
@@ -177,6 +195,8 @@ describe("LFactory", function () {
 
       const initialBorrowerBalance = await MockERC20_1.read.balanceOf([account1.account.address])
 
+      await mine(2000);
+
       await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount])
 
       const userLoans = await LFactory.read.getUserLoans([account1.account.address, MockERC20.address])
@@ -192,6 +212,8 @@ describe("LFactory", function () {
       console.log(await LSwapPairPool.read.getReserves())
 
       console.log(await LSwapPairPool.read.getActualReserves())
+
+      console.log(await LFactory.read.getLoanStats([account1.account.address, MockERC20.address]))
 
     });
 

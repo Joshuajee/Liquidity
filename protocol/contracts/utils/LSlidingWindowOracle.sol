@@ -9,6 +9,8 @@ import {ILFactory} from "../interfaces/ILFactory.sol";
 import {LSwapPair} from "../LSwapPair.sol";
 import {LV1Library} from "../liberies/LV1Library.sol";
 import {LV1OracleLibrary} from "../liberies/LV1OracleLibrary.sol";
+import "hardhat/console.sol";
+
 
 contract LSlidingWindowOracle {
 
@@ -64,7 +66,7 @@ contract LSlidingWindowOracle {
     // once per epoch period.
     function update(address pair) external {
 
-        // address pair = ILFactory(FACTORY).getPool(tokenA, tokenB);
+        console.log("UPDATE");
 
         // populate the array with empty observations (first call only)
         for (uint i = pairObservations[pair].length; i < granularity; i++) {
@@ -93,8 +95,11 @@ contract LSlidingWindowOracle {
     ) private pure returns (uint amountOut) {
         // overflow is desired.
         uint priceAverage = uint224((priceCumulativeEnd - priceCumulativeStart) / timeElapsed);
+        console.log("In", amountIn);
         
         amountOut = priceAverage * amountIn;
+
+        console.log("Out", amountOut, priceCumulativeEnd - priceCumulativeStart, timeElapsed);
     }
 
     // returns the amount out corresponding to the amount in for a given token using the moving average over the time
@@ -105,12 +110,15 @@ contract LSlidingWindowOracle {
         Observation storage firstObservation = getFirstObservationInWindow(pair);
 
         uint timeElapsed = block.timestamp - firstObservation.timestamp;
+
         require(timeElapsed <= windowSize, 'SlidingWindowOracle: MISSING_HISTORICAL_OBSERVATION');
         // should never happen.
         require(timeElapsed >= windowSize - periodSize * 2, 'SlidingWindowOracle: UNEXPECTED_TIME_ELAPSED');
 
         (uint price0Cumulative, uint price1Cumulative,) = LV1OracleLibrary.currentCumulativePrices(pair);
         (address token0,) = LV1Library.sortTokens(tokenIn, tokenOut);
+
+        console.log("hhhh",firstObservation.price0Cumulative, price0Cumulative);
 
         if (token0 == tokenIn) {
             return computeAmountOut(firstObservation.price0Cumulative, price0Cumulative, timeElapsed, amountIn);

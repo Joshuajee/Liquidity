@@ -265,7 +265,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
             //check for K
             if (uint(initialReserve0) * uint(initialReserve1) > uint(_reserve0) * uint(_reserve1)) {
-                //revert KInvariant();
+                revert KInvariant();
             }
 
         }
@@ -343,11 +343,11 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
      */
     function _update(uint112 amountInToken0, uint112 amountInToken1, uint112 amountOutToken0, uint112 amountOutToken1) internal {
         //reserves
-        uint112 reserve0 = (_reserve0 + amountInToken0) - amountOutToken0;
-        uint112 reserve1 = (_reserve1 + amountInToken1) - amountOutToken1;
+        uint112 reserve0 = _reserve0; 
+        uint112 reserve1 = _reserve1;
 
-        _reserve0 = reserve0;
-        _reserve1 = reserve1;
+        _reserve0 = (reserve0 + amountInToken0) - amountOutToken0;
+        _reserve1 = (reserve1 + amountInToken1) - amountOutToken1;
 
         //actual reserves
         _actualReserve0 = _actualReserve0 - amountOutToken0 + amountInToken0;
@@ -363,7 +363,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
         blockTimestampLast = blockTimestamp;
 
-        //ILFactory(FACTORY).update(address(this));
+        ILFactory(FACTORY).update(address(this));
 
         emit Sync(reserve0, reserve1);
     }

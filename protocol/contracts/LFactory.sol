@@ -193,7 +193,7 @@ contract LFactory is ILFactory {
     }
 
     function _calculateInterest(LoanMarket memory loan) internal returns (uint) {
-        return loan.accruedInterest + ((block.timestamp - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR);
+        return loan.accruedInterest + (((block.timestamp - loan.borrowedAt) * loan.interestRate * loan.amount) / YEAR);
     }
 
     function getUserLoans (address borrower, address collateral) public returns (LoanMarket[] memory) {
@@ -205,13 +205,18 @@ contract LFactory is ILFactory {
 
         LoanMarket [] memory loans = userLoans[borrower][collateral];
 
-        for (uint i = 0; i < loans.length; i++) {
+        for (uint i; i < loans.length; ++i) {
+            uint interest = _calculateInterest(loans[i]);
             totalDebt += loans[i].amount;
-            totalInterest += _calculateInterest(loans[i]);
-            totalLTV += 1;
+            totalInterest += interest;
+            totalLTV += oracle.consult(collateral, loans[i].amount + interest, loans[i].tokenBorrowed);
+
         }
 
+        totalLTV = LCollateralPool(collateral).balanceOf(borrower) / totalLTV;
+
     }
+
 
 
 

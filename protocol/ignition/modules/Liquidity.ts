@@ -53,6 +53,10 @@ const LFactoryModule = buildModule("LFactoryModule", (m) => {
 
   const LRouter = m.contract("LRouter", [LFactory, LFactory]);
 
+  const LSlidingWindowOracle = m.contract("LSlidingWindowOracle", [LFactory, 3600, 2]);
+
+  m.call(LFactory, "setOracle", [LSlidingWindowOracle])
+
   return { LFactory, LRouter };
 
 });
