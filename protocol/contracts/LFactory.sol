@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ILFactory} from "./interfaces/ILFactory.sol";
 import "./LSwapPair.sol";
 
@@ -18,6 +19,7 @@ contract LFactory is ILFactory {
 
     using Clones for address;
     using SafeERC20 for IERC20;
+    using SafeCast for *;
 
     uint public constant YEAR = 365 days;
 
@@ -97,7 +99,7 @@ contract LFactory is ILFactory {
         }
     }
 
-    function borrow(address collateral, address tokenToBorrow, uint amount) external checkLoan(msg.sender, collateral) {
+    function borrow(address collateral, address tokenToBorrow, uint112 amount) external checkLoan(msg.sender, collateral) {
 
         address borrower = msg.sender;
 
@@ -118,35 +120,36 @@ contract LFactory is ILFactory {
             amount: amount,
             accruedInterest: 0,
             interestRate: 1,
-            borrowedAt: uint64(block.timestamp)
+            borrowedAt: uint32(block.timestamp)
         }));
 
     }
 
 
-    function repay(address collateral, address tokenToBorrow, uint index, uint amount) public checkLoan(msg.sender, collateral) {
+    function repay(address collateral, address tokenToBorrow, uint index, uint112 amount) public checkLoan(msg.sender, collateral) {
 
         address borrower = msg.sender;
 
         address ammPool = getPool(collateral, tokenToBorrow);
 
         LoanMarket storage loan = userLoans[borrower][collateral][index];
+        
+        //Dangerous casting
+        uint112 interest = uint112(loan.accruedInterest + ((uint32(block.timestamp) - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR));
 
-        uint interest = loan.accruedInterest + ((block.timestamp - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR);
+        (uint112 debtToPay, uint112 interestToPay) = _splitRepayment(loan.amount, interest, amount);
 
-        (uint debtToPay, uint interestToPay) = _splitRepayment(loan.amount, interest, amount);
+        //LSwapPair(ammPool).repay(tokenToBorrow, borrower, debtToPay, interestToPay);
 
-        LSwapPair(ammPool).repay(tokenToBorrow, borrower, debtToPay, interestToPay);
-
-        if ((loan.amount + interest) < amount) {
-            uint length = getUserLoans(collateral, tokenToBorrow).length;
-            if (length > 1) userLoans[borrower][collateral][index] = userLoans[borrower][collateral][length - 1];
-            userLoans[borrower][collateral].pop();
-        } else {
-            loan.borrowedAt = uint64(block.timestamp);
-            loan.accruedInterest += (interest - interestToPay);
-            loan.amount -= debtToPay;
-        }
+        // if ((loan.amount + interest) < amount) {
+        //     uint length = getUserLoans(collateral, tokenToBorrow).length;
+        //     if (length > 1) userLoans[borrower][collateral][index] = userLoans[borrower][collateral][length - 1];
+        //     userLoans[borrower][collateral].pop();
+        // } else {
+        //     loan.borrowedAt = uint32(block.timestamp);
+        //     loan.accruedInterest += (interest - interestToPay);
+        //     loan.amount -= debtToPay;
+        // }
 
     }
 
@@ -155,9 +158,9 @@ contract LFactory is ILFactory {
         
     }
 
-    function _splitRepayment (uint currentDebt, uint accruedInterest, uint paymentAmount) internal  returns (uint debt, uint interest){
-        uint totalDebt = currentDebt + accruedInterest;
-        debt = ((currentDebt * paymentAmount) / totalDebt);
+    function _splitRepayment (uint112 currentDebt, uint112 accruedInterest, uint112 paymentAmount) internal  returns (uint112 debt, uint112 interest){
+        uint112 totalDebt = currentDebt + accruedInterest;
+        debt = ((uint(currentDebt) * uint(paymentAmount)) / totalDebt).toUint112();
         interest = paymentAmount - debt;
     }
 
@@ -175,8 +178,25 @@ contract LFactory is ILFactory {
 
     }
 
+    function _calculateInterest(LoanMarket memory loan) internal returns (uint) {
+        return loan.accruedInterest + ((block.timestamp - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR);
+    }
+
     function getUserLoans (address borrower, address collateral) public returns (LoanMarket[] memory) {
         return userLoans[borrower][collateral];
+    }
+
+
+    function getLoanStats(address borrower, address collateral) external returns (uint totalLTV, uint totalDebt, uint totalInterest) {
+
+        LoanMarket [] memory loans = userLoans[borrower][collateral];
+
+        for (uint i = 0; i < loans.length; i++) {
+            totalDebt += loans[i].amount;
+            totalInterest += _calculateInterest(loans[i]);
+            totalLTV += 1;
+        }
+
     }
 
 

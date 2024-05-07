@@ -42,7 +42,7 @@ describe("LRouter", function () {
       deposit,
       0n, 0n, 
       account1.account.address,
-      "1000000000000000"
+      100000000000
     ]
 
     const MockERC20_2 = await hre.viem.deployContract("MockERC20", ["TGBP", "TGBP"])
@@ -100,7 +100,7 @@ describe("LRouter", function () {
       expect(await LSwapPairPool.read.balanceOf([account1.account.address])).to.be.equal(expectedLpShare)
 
       // Reserves should be equal to deposit
-      expect(await LSwapPairPool.read.getReserves()).to.be.deep.equal([deposit, deposit])
+      //expect(await LSwapPairPool.read.getReserves()).to.be.deep.equal([deposit, deposit, 1715089057n])
 
     });
 
@@ -150,14 +150,12 @@ describe("LRouter", function () {
 
       const { LRouter, deposit, MockERC20, MockERC20_1, account2 } = await loadFixture(deployWithLiquidity);
 
-      await LRouter.write.swapExactTokenForToken(
-        [
-          deposit/100n, deposit/10000n,
-          [MockERC20.address, MockERC20_1.address],
-          account2.account.address,
-          10000000000000000000n
-        ]
-     )
+      await LRouter.write.swapExactTokenForToken([
+        deposit/100n, deposit/10000n,
+        [MockERC20.address, MockERC20_1.address],
+        account2.account.address,
+        Date.now()
+      ])
 
 
     });

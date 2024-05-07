@@ -34,8 +34,8 @@ contract LRouter is ReentrancyGuard {
         address pool;
         address token0;
         address token1;
-        uint reserve0;
-        uint reserve1;
+        uint112 reserve0;
+        uint112 reserve1;
         // uint fees0;
         // uint fees1;
     }
@@ -165,24 +165,23 @@ contract LRouter is ReentrancyGuard {
         require(amountB >= amountBMin, ' INSUFFICIENT_B_AMOUNT');
     }
 
-
     function swapExactTokenForToken(
-        uint amountIn,
-        uint amountOutMin,
+        uint112 amountIn,
+        uint112 amountOutMin,
         address[] calldata path,
         address to,
-        uint deadline
-    ) external ensure(deadline) returns (uint[] memory amounts) {
+        uint32 deadline
+    ) external ensure(deadline) {
 
         bool isOutput0  =  path[0] > path[1];
 
         address pair = ILFactory(FACTORY).getPool(path[0], path[1]);
 
-        IERC20(path[0]).safeTransferFrom(msg.sender, pair, amountIn);
+        IERC20(path[0]).safeTransferFrom(msg.sender, pair, uint(amountIn));
 
-        uint amountOut = amountOutMin;
+        uint112 amountOut = amountOutMin;
 
-        (uint amount0Out, uint amount1Out) = isOutput0 ? (uint(0), amountOut) : (amountOut, uint(0));
+        (uint112 amount0Out, uint112 amount1Out) = isOutput0 ? (uint112(0), amountOut) : (amountOut, uint112(0));
   
         LSwapPair(pair).swap(amount0Out, amount1Out, to);
     }
@@ -225,7 +224,7 @@ contract LRouter is ReentrancyGuard {
 
             (address token0, address token1) = pool.getTokens();
 
-            (uint reserve0, uint reserve1) = pool.getReserves();
+            (uint112 reserve0, uint112 reserve1, ) = pool.getReserves();
 
             allPools[i] = Pool({
                 pool: address(pool),

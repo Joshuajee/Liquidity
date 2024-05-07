@@ -238,14 +238,14 @@
             "type": "address"
           },
           {
-            "internalType": "uint256",
+            "internalType": "uint112",
             "name": "reserve0",
-            "type": "uint256"
+            "type": "uint112"
           },
           {
-            "internalType": "uint256",
+            "internalType": "uint112",
             "name": "reserve1",
-            "type": "uint256"
+            "type": "uint112"
           }
         ],
         "internalType": "struct LRouter.Pool[]",
@@ -332,14 +332,14 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amountIn",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amountOutMin",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
         "internalType": "address[]",
@@ -352,19 +352,13 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint32",
         "name": "deadline",
-        "type": "uint256"
+        "type": "uint32"
       }
     ],
     "name": "swapExactTokenForToken",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "amounts",
-        "type": "uint256[]"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },

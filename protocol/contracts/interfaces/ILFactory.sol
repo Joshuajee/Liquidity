@@ -8,8 +8,8 @@ interface ILFactory {
         address collateralPool;
 
         address tokenBorrowed;
-        uint amount;
-        uint accruedInterest;
+        uint112 amount;
+        uint112 accruedInterest;
         uint8 interestRate;
         uint64 borrowedAt;
     }

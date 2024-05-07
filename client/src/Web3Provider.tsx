@@ -11,7 +11,7 @@ const config = createConfig(
     transports: {
       // RPC URL for each chain
       [liskSepolia.id]: http(
-        `https://eth-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_ID}`,
+        `https://rpc.sepolia-api.lisk.com`,
       ),
       [hardhat.id]: http(
         `http://127.0.0.1:8545`,

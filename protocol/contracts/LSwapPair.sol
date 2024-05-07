@@ -8,6 +8,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 // interfaces
 import {ILFactory} from "./interfaces/ILFactory.sol";
 import {LSwapERC20} from "./utils/LSwapERC20.sol";
@@ -34,17 +36,18 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     error LoanAmountGreaterThanThreshold();
     
     using SafeERC20 for IERC20;
+    using SafeCast for *;
 
     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
 
     address public FACTORY;
 
     //reserves
-    uint private _reserve0;
-    uint private _reserve1;
+    uint112 private _reserve0;
+    uint112 private _reserve1;
 
-    uint private _actualReserve0;
-    uint private _actualReserve1;
+    uint112 private _actualReserve0;
+    uint112 private _actualReserve1;
 
     // Figure out a way to use excess 12 bytes in here to store something
     address private _token0;
@@ -55,19 +58,29 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     uint private _pendingLiquidityFees1;
 
     // Fees per token scaled by 1e18
-    uint public feesPerTokenStored;
+    uint public feesPerTokenStored0;
+    uint public feesPerTokenStored1;
+
+    uint public price0CumulativeLast;
+    uint public price1CumulativeLast;
+
+    uint32 public blockTimestampLast;
 
     uint private _pendingProtocolFees0;
     uint private _pendingProtocolFees1;
 
-    mapping(address => uint256) public lpFees;
-    mapping(address => uint256) public feesPerTokenPaid;
+    mapping(address => uint256) public lpFees0;
+    mapping(address => uint256) public lpFees1;
+
+    mapping(address => uint256) public feesPerTokenPaid0;
+    mapping(address => uint256) public feesPerTokenPaid1;
 
     event Mint(address, uint256, uint256);
     event Burn(address, uint256, uint256, address);
     event Swap(address, uint256, uint256, uint256, uint256, address);
-    event Borrow(address indexed tokenToBorrow, address indexed borrower, uint amount); 
-    event Repay(address indexed tokenToRepay, address indexed borrower, uint debt, uint interest); 
+    event Borrow(address indexed tokenToBorrow, address indexed borrower, uint112 amount); 
+    event Repay(address indexed tokenToRepay, address indexed borrower, uint112 debt, uint112 interest); 
+    event Sync(uint112 indexed reserve0, uint112 indexed reserve1); 
 
 
     modifier isFactory() {
@@ -113,26 +126,26 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
         uint256 totalSupply_ = totalSupply();
 
-        uint256 balanceToken0 = IERC20(_token0).balanceOf(address(this));
-        uint256 balanceToken1 = IERC20(_token1).balanceOf(address(this));
+        //Dangerous Casting
+        uint112 balanceToken0 = IERC20(_token0).balanceOf(address(this)).toUint112();
+        uint112 balanceToken1 = IERC20(_token1).balanceOf(address(this)).toUint112();
       
         // at this point in time we will get the actual reserves
-        (uint256 reserveToken0, uint256 reserveToken1) = getReserves();
+        (uint112 reserveToken0, uint112 reserveToken1) = getActualReserves();
 
-        uint fees = 0;// _pendingLiquidityFees - _pendingProtocolFees;
+        uint112 fees = 0;// _pendingLiquidityFees - _pendingProtocolFees;
 
-        uint amountToken0 = balanceToken0 - reserveToken0 - fees;
-        uint amountToken1 = balanceToken1 - reserveToken1 - fees;
+        //Dangerous casting
+        uint112 amountToken0 = (balanceToken0 - reserveToken0 - fees);
+        uint112 amountToken1 = (balanceToken1 - reserveToken1 - fees);
 
         _updateFeeRewards(to);
 
         if (totalSupply_ == 0) {
             _mint(address(0), MINIMUM_LIQUIDITY);
-            amountToken0 += 1;
-            amountToken1 += 1;
-            liquidity = Math.sqrt(amountToken0 * amountToken1) - MINIMUM_LIQUIDITY;
+            liquidity = Math.sqrt(uint(amountToken0) * uint(amountToken1)) - MINIMUM_LIQUIDITY;
         } else {
-            liquidity = Math.min((amountToken0 * totalSupply_) / reserveToken0, (amountToken1 * totalSupply_) / reserveToken1);
+            liquidity = Math.min((uint(amountToken0) * totalSupply_) / reserveToken0, (uint(amountToken1) * totalSupply_) / reserveToken1);
         }
 
         _mint(to, liquidity);
@@ -157,14 +170,14 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
      * Emits:
      * - A `Burn` event with necessary details of the burn.
      */
-    function burn(address to) external returns (uint256 amountToken0, uint256 amountToken1) {
+    function burn(address to) external returns (uint112 amountToken0, uint112 amountToken1) {
 
         uint256 liquidity = balanceOf(address(this));
 
         uint256 totalSupply_ = totalSupply();
 
-        amountToken0 = (liquidity * _reserve0) / totalSupply_;
-        amountToken1 = (liquidity * _reserve1) / totalSupply_;
+        amountToken0 = uint112((liquidity * _reserve0) / totalSupply_);
+        amountToken1 = uint112((liquidity * _reserve1) / totalSupply_);
 
         if (amountToken0 == 0 || amountToken1 == 0) {
             revert InsufficientLiquidityBurned();
@@ -172,15 +185,16 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
         _updateFeeRewards(to);
         
-        //q- can i take my fees after a burn?
+
         _burn(address(this), liquidity);
 
         // Transfer liquidity tokens to the user
         IERC20(_token0).safeTransfer(to, amountToken0);
         IERC20(_token1).safeTransfer(to, amountToken1);
 
-        uint256 balanceToken0 = IERC20(_token0).balanceOf(address(this));
-        uint256 balanceToken1 = IERC20(_token1).balanceOf(address(this));
+        //
+        uint112 balanceToken0 = uint112(IERC20(_token0).balanceOf(address(this)));
+        uint112 balanceToken1 = uint112(IERC20(_token1).balanceOf(address(this)));
 
         _update(balanceToken0, balanceToken1, 0, 0);
 
@@ -207,10 +221,10 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
      * Security:
      * - Uses `nonReentrant` modifier to prevent reentrancy attacks.
      */
-    function swap(uint256 amountToken0Out, uint256 amountToken1Out, address to) external nonReentrant returns (uint amountInToken0, uint amountInToken1) {
+    function swap(uint112 amountToken0Out, uint112 amountToken1Out, address to) external nonReentrant returns (uint112 amountInToken0, uint112 amountInToken1) {
         
-        uint feesCollected0; 
-        uint feesCollected1; 
+        uint112 feesCollected0; 
+        uint112 feesCollected1; 
 
         {
 
@@ -218,33 +232,30 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
                 revert InsufficientOutputAmount();
             }
             
-            (uint initialReserve0, uint initialReserve1) = getActualReserves();
+            (uint112 initialReserve0, uint112 initialReserve1) = getActualReserves();
 
             if (amountToken0Out > initialReserve0 || amountToken1Out > initialReserve1) {
                 revert InsufficientAmountOut();
             }
 
             if (amountToken0Out > 0) {
-
-                amountInToken1 = IERC20(_token1).balanceOf(address(this)) - initialReserve1;// + _pendingLiquidityFees0 + _pendingProtocolFees0);
-                
+                //Dangerous Casting
+                amountInToken1 = (IERC20(_token1).balanceOf(address(this)) - initialReserve1).toUint112();
                 // optimistically send tokens out
                 IERC20(_token0).safeTransfer(to, amountToken0Out);
-
             } 
             
             if (amountToken1Out > 0) {
-
-                amountInToken0 = IERC20(_token0).balanceOf(address(this)) - initialReserve0;// + _pendingLiquidityFees1 + _pendingProtocolFees1);
-
+                //Dangerous Casting
+                amountInToken0 = (IERC20(_token0).balanceOf(address(this)) - initialReserve0).toUint112();
                 // optimistically send tokens out
                 IERC20(_token1).safeTransfer(to, amountToken1Out);
-            
             }
 
             (feesCollected0, feesCollected1,,) = _handleFees(amountInToken0, amountInToken1);
 
-            console.log("In", amountInToken0, amountInToken1);
+            console.log("In:  ", amountInToken0, amountInToken1);
+            console.log("Out: ", amountToken0Out, amountToken1Out);
 
             amountInToken0 -= feesCollected0;
             amountInToken1 -= feesCollected1;
@@ -252,20 +263,20 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
             // update reserves
             _update(amountInToken0, amountInToken1, amountToken0Out, amountToken1Out);
 
-            console.log("KI", initialReserve0 * initialReserve1, initialReserve0, initialReserve1);
-            console.log("KF", _reserve0 * _reserve1, _reserve0, _reserve1);
+            console.log("KI", uint(initialReserve0) * uint(initialReserve1), initialReserve0, initialReserve1);
+            console.log("KF", uint(_reserve0) * uint(_reserve1), uint(_reserve0), uint(_reserve1));
 
             //check for K
-            if (initialReserve0 * initialReserve1 > _reserve0 * _reserve1) {
+            if (uint(initialReserve0) * uint(initialReserve1) > uint(_reserve0) * uint(_reserve1)) {
                 revert KInvariant();
             }
 
         }
 
-        emit Swap(msg.sender, amountInToken0, amountInToken1, amountToken0Out, amountToken1Out, to);
+        // emit Swap(msg.sender, amountInToken0, amountInToken1, amountToken0Out, amountToken1Out, to);
     }
 
-    function borrow(address tokenToBorrow, address borrower, uint amount) external isFactory {
+    function borrow(address tokenToBorrow, address borrower, uint112 amount) external isFactory {
 
         if (tokenToBorrow == _token0) {
             IERC20(_token0).safeTransfer(borrower, amount);
@@ -281,7 +292,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
     }
 
-    function repay(address tokenToRepay, address borrower, uint debt, uint interest) external isFactory {
+    function repay(address tokenToRepay, address borrower, uint112 debt, uint112 interest) external isFactory {
         if (tokenToRepay == _token0) {
             _actualReserve0 += debt; 
             _handleFeesCore(interest, 0);
@@ -293,16 +304,17 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     }
 
     /// @notice the real amount of tokens stored in the pool
-    function getActualReserves() public view returns (uint reserveToken0, uint reserveToken1) {
+    function getActualReserves() public view returns (uint112 reserveToken0, uint112 reserveToken1) {
         reserveToken0 = _actualReserve0;
         reserveToken1 = _actualReserve1;
     }
 
 
     /// @notice returns real reserves 
-    function getReserves() public view returns (uint reserve0, uint reserve1) {
+    function getReserves() public view returns (uint112 reserve0, uint112 reserve1, uint32 _blockTimestampLast) {
        reserve0 = _reserve0 > 0 ? _reserve0 : 1;
        reserve1 = _reserve1 > 0 ? _reserve1 : 1;
+       _blockTimestampLast = blockTimestampLast;
     }
 
     /**
@@ -332,15 +344,29 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     /**
      * @notice Updates the reserve amounts.
      */
-    function _update(uint256 amountInToken0, uint256 amountInToken1, uint256 amountOutToken0, uint256 amountOutToken1) internal {
+    function _update(uint112 amountInToken0, uint112 amountInToken1, uint112 amountOutToken0, uint112 amountOutToken1) internal {
         //reserves
-        _reserve0 = _reserve0 - amountOutToken0 + amountInToken0;
-        _reserve1 = _reserve1 - amountOutToken1 + amountInToken1;
+        uint112 reserve0 = (_reserve0 + amountInToken0) - amountOutToken0;
+        uint112 reserve1 = (_reserve1 + amountInToken1) - amountOutToken1;
+
+        _reserve0 = reserve0;
+        _reserve1 = reserve1;
 
         //actual reserves
         _actualReserve0 = _actualReserve0 - amountOutToken0 + amountInToken0;
         _actualReserve1 = _actualReserve1 - amountOutToken1 + amountInToken1;
 
+        uint32 blockTimestamp = uint32(block.timestamp % 2**32);
+        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+        if (timeElapsed > 0 && reserve0 != 0 && reserve1 != 0) {
+            // * never overflows, and + overflow is desired
+            price0CumulativeLast += uint(reserve1 * timeElapsed) / reserve0;
+            price1CumulativeLast += uint(reserve0 * timeElapsed) / reserve1;
+        }
+
+        blockTimestampLast = blockTimestamp;
+
+        emit Sync(reserve0, reserve1);
     }
     /**
      * @dev Calculates and handles the distribution of fees for each swap transaction.
@@ -358,9 +384,9 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
      * - Updates the `_pendingProtocolFees` by 60% of the fees collected or resets it to 0.
      * - Updates the `_feesPerTokenStored` if pool is not in presale.
      */
-    function _handleFees(uint256 amountInToken0, uint256 amountInToken1)
+    function _handleFees(uint112 amountInToken0, uint112 amountInToken1)
         internal
-        returns (uint256 feesCollected0, uint256 feesCollected1, uint256 feesLp0, uint256 feesLp1)
+        returns (uint112 feesCollected0, uint112 feesCollected1, uint112 feesLp0, uint112 feesLp1)
     {
 
         feesCollected0 = (amountInToken0 * 1) / 100;
@@ -371,9 +397,9 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
     }
 
 
-    function _handleFeesCore(uint256 feesCollected0, uint256 feesCollected1)
+    function _handleFeesCore(uint112 feesCollected0, uint112 feesCollected1)
         internal
-        returns (uint256 feesLp0, uint256 feesLp1)
+        returns (uint112 feesLp0, uint112 feesLp1)
     {
 
         // lp fess is fixed 90% of the fees collected of total 99 bps
@@ -406,9 +432,11 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
     function _updateFeeRewards(address lp) internal {
         // save for multiple reads
-        uint256 _feesPerTokenStored = feesPerTokenStored;
-        lpFees[lp] = _earned(lp, _feesPerTokenStored);
-        feesPerTokenPaid[lp] = _feesPerTokenStored;
+        uint256 _feesPerTokenStored0 = feesPerTokenStored0;
+        uint256 _feesPerTokenStored1 = feesPerTokenStored1;
+        (lpFees0[lp], lpFees1[lp]) = _earned(lp, _feesPerTokenStored0, _feesPerTokenStored1);
+        feesPerTokenPaid0[lp] = _feesPerTokenStored0;
+        feesPerTokenPaid1[lp] = _feesPerTokenStored1;
     }
 
     /**
@@ -418,18 +446,21 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
      *      `feesPerTokenPaid` for the liquidity provider. It returns the sum of the previously
      *      stored fees and the newly accrued fees.
      * @param lp The address of the liquidity provider.
-     * @param _feesPerTokenStored The current value of `feesPerTokenStored`.
+     * @param _feesPerTokenStored0 The current value of `feesPerTokenStored0`.
      * @return The total earned fee rewards for the given liquidity provider.
      */
-    function _earned(address lp, uint256 _feesPerTokenStored) internal view returns (uint256) {
-        uint256 feesPerToken = _feesPerTokenStored - feesPerTokenPaid[lp];
-        uint256 feesAccrued = (balanceOf(lp) * feesPerToken) / 1e18;
-        return lpFees[lp] + feesAccrued;
+    function _earned(address lp, uint256 _feesPerTokenStored0, uint256 _feesPerTokenStored1) internal view returns (uint256, uint256) {
+        uint lpBalance = balanceOf(lp);
+        uint256 feesPerToken0 = _feesPerTokenStored0 - feesPerTokenPaid0[lp];
+        uint256 feesPerToken1 = _feesPerTokenStored1 - feesPerTokenPaid1[lp];
+        uint256 feesAccrued0 = (lpBalance * feesPerToken0) / 1e18;
+         uint256 feesAccrued1 = (lpBalance * feesPerToken1) / 1e18;
+        return (lpFees0[lp] + feesAccrued0, lpFees1[lp] + feesAccrued1);
     }
 
     /* ----------------------------- VIEW FUNCTIONS ----------------------------- */
-    function earned(address lp) external view returns (uint256) {
-        return _earned(lp, feesPerTokenStored);
+    function earned(address lp) external view returns (uint256, uint256) {
+        return _earned(lp, feesPerTokenStored0, feesPerTokenStored1);
     }
 
     function getPendingLiquidityFees() external view returns (uint pendingLiquidityFees0, uint pendingLiquidityFees1) {

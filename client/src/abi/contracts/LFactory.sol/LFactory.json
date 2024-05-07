@@ -67,6 +67,22 @@
   {
     "inputs": [
       {
+        "internalType": "uint8",
+        "name": "bits",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "SafeCastOverflowedUintDowncast",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "token",
         "type": "address"
@@ -114,9 +130,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amount",
-        "type": "uint256"
+        "type": "uint112"
       }
     ],
     "name": "borrow",
@@ -194,6 +210,40 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "borrower",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "collateral",
+        "type": "address"
+      }
+    ],
+    "name": "getLoanStats",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalLTV",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalDebt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalInterest",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -282,14 +332,14 @@
             "type": "address"
           },
           {
-            "internalType": "uint256",
+            "internalType": "uint112",
             "name": "amount",
-            "type": "uint256"
+            "type": "uint112"
           },
           {
-            "internalType": "uint256",
+            "internalType": "uint112",
             "name": "accruedInterest",
-            "type": "uint256"
+            "type": "uint112"
           },
           {
             "internalType": "uint8",
@@ -328,9 +378,9 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amount",
-        "type": "uint256"
+        "type": "uint112"
       }
     ],
     "name": "repay",
@@ -397,14 +447,14 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amount",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "accruedInterest",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
         "internalType": "uint8",

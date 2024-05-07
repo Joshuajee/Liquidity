@@ -74,6 +74,22 @@
   {
     "inputs": [
       {
+        "internalType": "uint8",
+        "name": "bits",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "SafeCastOverflowedUintDowncast",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "token",
         "type": "address"
@@ -124,9 +140,9 @@
       },
       {
         "indexed": false,
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amount",
-        "type": "uint256"
+        "type": "uint112"
       }
     ],
     "name": "Borrow",
@@ -205,15 +221,15 @@
       },
       {
         "indexed": false,
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "debt",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "interest",
-        "type": "uint256"
+        "type": "uint112"
       }
     ],
     "name": "Repay",
@@ -260,6 +276,25 @@
       }
     ],
     "name": "Swap",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint112",
+        "name": "reserve0",
+        "type": "uint112"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint112",
+        "name": "reserve1",
+        "type": "uint112"
+      }
+    ],
+    "name": "Sync",
     "type": "event"
   },
   {
@@ -381,6 +416,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "blockTimestampLast",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -393,9 +441,9 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amount",
-        "type": "uint256"
+        "type": "uint112"
       }
     ],
     "name": "borrow",
@@ -414,14 +462,14 @@
     "name": "burn",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amountToken0",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amountToken1",
-        "type": "uint256"
+        "type": "uint112"
       }
     ],
     "stateMutability": "nonpayable",
@@ -454,6 +502,11 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -467,7 +520,26 @@
         "type": "address"
       }
     ],
-    "name": "feesPerTokenPaid",
+    "name": "feesPerTokenPaid0",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "feesPerTokenPaid1",
     "outputs": [
       {
         "internalType": "uint256",
@@ -480,7 +552,20 @@
   },
   {
     "inputs": [],
-    "name": "feesPerTokenStored",
+    "name": "feesPerTokenStored0",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "feesPerTokenStored1",
     "outputs": [
       {
         "internalType": "uint256",
@@ -496,14 +581,14 @@
     "name": "getActualReserves",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "reserveToken0",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "reserveToken1",
-        "type": "uint256"
+        "type": "uint112"
       }
     ],
     "stateMutability": "view",
@@ -563,14 +648,19 @@
     "name": "getReserves",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "reserve0",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "reserve1",
-        "type": "uint256"
+        "type": "uint112"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_blockTimestampLast",
+        "type": "uint32"
       }
     ],
     "stateMutability": "view",
@@ -620,7 +710,26 @@
         "type": "address"
       }
     ],
-    "name": "lpFees",
+    "name": "lpFees0",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "lpFees1",
     "outputs": [
       {
         "internalType": "uint256",
@@ -664,6 +773,32 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "price0CumulativeLast",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "price1CumulativeLast",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -676,14 +811,14 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "debt",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "interest",
-        "type": "uint256"
+        "type": "uint112"
       }
     ],
     "name": "repay",
@@ -694,14 +829,14 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amountToken0Out",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amountToken1Out",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
         "internalType": "address",
@@ -712,14 +847,14 @@
     "name": "swap",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amountInToken0",
-        "type": "uint256"
+        "type": "uint112"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint112",
         "name": "amountInToken1",
-        "type": "uint256"
+        "type": "uint112"
       }
     ],
     "stateMutability": "nonpayable",
