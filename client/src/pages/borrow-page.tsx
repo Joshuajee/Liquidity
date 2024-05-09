@@ -1,4 +1,4 @@
-import AmmPoolCard from "@/components/AmmPoolCard"
+import AmmLendingPoolCard from "@/components/AmmLendingPoolCard"
 import useAmmPools from "@/hooks/useAmmPools"
 
 const BorrowPage = () => {
@@ -14,7 +14,7 @@ const BorrowPage = () => {
 
                 {
                     ammPools?.map((ammPool, index) => {
-                        return <AmmPoolCard pool={ammPool} key={index}/>
+                        return <AmmLendingPoolCard pool={ammPool} key={index}/>
                     })
                 }
 

@@ -1,10 +1,11 @@
-import CollateralCard from "@/components/CollateralCard"
 import { useParams } from "react-router-dom"
-import { Address } from "viem"
+
 
 const LoanPage = () => {
 
-    const { collateral, token } = useParams()
+    const { collateral } = useParams()
+
+    console.log(collateral)
 
     return (
         <div className="h-full w-full px-10 pt-20">

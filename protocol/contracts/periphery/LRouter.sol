@@ -36,8 +36,8 @@ contract LRouter is ReentrancyGuard {
         address token1;
         uint112 reserve0;
         uint112 reserve1;
-        // uint fees0;
-        // uint fees1;
+        uint fee0;
+        uint fee1;
     }
 
     struct AddLiquidity {
@@ -189,32 +189,23 @@ contract LRouter is ReentrancyGuard {
     // Getters
 
     function getAmmPools(address owner) external returns (Pool [] memory allPools) {
-
         uint length = pools.length;
-
         allPools = new Pool[] (length);
-
         for (uint i = 0;  i < length; i++) {
-
             LSwapPair pool = LSwapPair(pools[i]);
-
             (address token0, address token1) = pool.getTokens();
-
             (uint112 reserve0, uint112 reserve1, ) = pool.getReserves();
-
+            (uint fee0, uint fee1) = pool.earned(owner);
             allPools[i] = Pool({
                 pool: address(pool),
                 token0: token0,
                 token1: token1,
                 reserve0: reserve0,
-                reserve1: reserve1
-                // uint fees0;
-                // uint fees1;
+                reserve1: reserve1,
+                fee0: fee0,
+                fee1: fee1
             });
-        
-
         }
-
     }
 
 }

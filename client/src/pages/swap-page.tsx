@@ -64,13 +64,9 @@ const SwapPage = () => {
     } 
 
     const swap = async () => {
-
         const slippage = 60n
-
         setLoading(true)
-
         try {
-
             const { request } = await publicClient.simulateContract({
                 address: ROUTER,
                 abi: RouterAbi,
@@ -84,30 +80,23 @@ const SwapPage = () => {
                 ],
                 account: address
             })
-
             await walletClient.writeContract(request)
-
             setValueA("")
             setValueB("")
-
-
         } catch (e) {
             toast.error((e as any)?.shortMessage)
             console.error(e)
         } finally {
             setLoading(false)
         }
-
     }
 
     const handleClick = () => {
-
         if ((approval as any)?.allowance < valueAToWei) {
             approval.createAllowance()
         } else {
             swap()
         }
-    
     }
 
     return (

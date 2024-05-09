@@ -246,6 +246,16 @@
             "internalType": "uint112",
             "name": "reserve1",
             "type": "uint112"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fee0",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fee1",
+            "type": "uint256"
           }
         ],
         "internalType": "struct LRouter.Pool[]",

@@ -1,7 +1,10 @@
 import AddLiquidity from "@/components/AddLiquidity"
+import AmmPoolCard from "@/components/AmmPoolCard"
+import useAmmPools from "@/hooks/useAmmPools"
 
 const AddLiquidityPage = () => {
 
+    const ammPools = useAmmPools() as any[]
 
     return (
         <div className="flex justify-center h-full w-full px-10">
@@ -16,7 +19,13 @@ const AddLiquidityPage = () => {
 
                 <div className="w-full border-[1px] mt-2 border-white rounded-3xl p-4">
 
-                    <p className="text-center"> No Liquidity Found </p>
+                { (ammPools?.length === 0) && <p className="text-center"> No Liquidity Found </p> }
+
+                    {
+                        ammPools?.map((ammPool, index) => {
+                            return <AmmPoolCard pool={ammPool} key={index}/>
+                        })
+                    }
 
                 </div>
 

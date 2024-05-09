@@ -4,6 +4,16 @@ import { useEffect } from "react"
 import { toast } from "react-toastify"
 import useCurrentChain from "./useCurrentChain"
 import RouterAbi from "@/abi/contracts/periphery/LRouter.sol/LRouter.json"
+import { Address } from "viem"
+
+export interface IAmmPool {
+    token0: Address;
+    token1: Address;
+    reserve0: bigint;
+    reserve1: bigint;
+    fee0: bigint;
+    fee1: bigint;
+}
 
 const useAmmPools = () => {
 
@@ -29,7 +39,7 @@ const useAmmPools = () => {
         }
     }, [isSuccess, isError, error, data])
 
-    return data
+    return data as IAmmPool[]
 }
 
 export default useAmmPools
