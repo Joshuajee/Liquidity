@@ -158,7 +158,7 @@ describe("LRouter", function () {
         deposit/100n, deposit/10000n,
         [MockERC20.address, MockERC20_1.address],
         account2.account.address,
-        Date.now()
+        BigInt(Date.now())
       ])
 
 

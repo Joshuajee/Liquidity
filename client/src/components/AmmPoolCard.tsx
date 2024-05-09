@@ -61,7 +61,7 @@ const AmmPoolCard = ({ pool } : IProps) => {
                     {symbol1} / {symbol2}
                 </p>
 
-                <p>1 {symbol1} = {(pool.reserve0 / pool.reserve1).toString()} {symbol2}</p>
+                <p>1 {symbol1} = {(Number(pool.reserve0 * 1000n / pool.reserve1)/1000).toString()} {symbol2}</p>
 
                 <p className="grow"></p>
 

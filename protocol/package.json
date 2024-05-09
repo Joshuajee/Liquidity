@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "test": "npx hardhat test",
+    "move": "npx hardhat run ./scripts/time.ts --network localhost",
     "deploy:local": "npx hardhat ignition deploy ./ignition/modules/Liquidity.ts --network localhost",
     "action:local": "npx hardhat ignition deploy ./ignition/modules/Operations.ts --network localhost"
   },

@@ -6,11 +6,14 @@ import { FACTORY, ROUTER } from "@/lib/constants"
 import { IToken } from "@/lib/interfaces"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
-import { parseEther, zeroAddress } from "viem"
+import { Address, parseEther, zeroAddress } from "viem"
 import FactoryAbi from "@/abi/contracts/LFactory.sol/LFactory.json"
 import { useAccount, useReadContract } from "wagmi"
 import useViemClient from "@/hooks/useClients"
 import RouterAbi from "@/abi/contracts/periphery/LRouter.sol/LRouter.json"
+import useAmmPrice from "@/hooks/useAmmPrice"
+import { weiToEther } from "@/lib/utils"
+
 
 const SwapPage = () => {
 
@@ -36,19 +39,23 @@ const SwapPage = () => {
     const pair = useReadContract({
         abi: FactoryAbi,
         address: FACTORY,
-        functionName: "getToken",
-        args: [tokenA, tokenB],
+        functionName: "getPool",
+        args: [tokenA?.address, tokenB?.address],
         chainId: chain.id,
     })
 
+    const { amountOut } = useAmmPrice(pair.data as Address, tokenA?.address as Address, valueAToWei, tokenB?.address as Address)
+
     useEffect(() => {
-        if (pair.isError) {
-            //toast.error(String(pair?.error.shortMessage))
+        if (pair.isError && tokenA && tokenB) {
+            toast.error("Pair Does not Exist")
         }
-        if (pair.isSuccess) {
-            toast.success("Liquidty added succesfully")
-        }
-    }, [pair])
+    }, [pair, tokenA, tokenB])
+
+    useEffect(() => {
+        setValueB(weiToEther(amountOut))
+    }, [amountOut])
+
 
     let text = (!tokenA || !tokenB) ? "Select Tokens" : pair.data === zeroAddress ? "Pair does not Exist" : "Swap"
 
@@ -58,7 +65,7 @@ const SwapPage = () => {
 
     const swap = async () => {
 
-        const slippage = 90n
+        const slippage = 60n
 
         setLoading(true)
 
@@ -70,18 +77,22 @@ const SwapPage = () => {
                 functionName: 'swapExactTokenForToken',
                 args: [
                     valueAToWei, 
-                    valueBToWei * slippage, 
+                    valueBToWei * slippage / 100n, 
                     [tokenA?.address, tokenB?.address],
                     address, 
-                    Date.now() + 10000000000000
+                    Date.now() * 2
                 ],
                 account: address
             })
 
             await walletClient.writeContract(request)
 
+            setValueA("")
+            setValueB("")
+
+
         } catch (e) {
-            toast.error((e as any)?.reason)
+            toast.error((e as any)?.shortMessage)
             console.error(e)
         } finally {
             setLoading(false)
@@ -98,10 +109,6 @@ const SwapPage = () => {
         }
     
     }
-
-    useEffect(() => {
-        setValueB(String(Number(valueA) / 10))
-    }, [valueA])
 
     return (
         <div className="flex justify-center items-center h-full w-full">

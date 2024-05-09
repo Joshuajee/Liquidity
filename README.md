@@ -2,7 +2,10 @@
 
 Tagline: Unlocking Efficient Liquidity and Funding Opportunities
 
-Overview: Liquidity is a cutting-edge decentralized finance (DeFi) platform that combines an Automated Market Maker (AMM) with a lending protocol, revolutionizing the way liquidity is provisioned and utilized in the digital asset space.
+DEFI has revolutionized the Decentralized Economy, from AMMs to Lending protocols that create wealth through the onchain investments. But the current DEFI solutions particularly AMMs have the issue of under utilized liquidity. Majority of the funds invested into AMMs remain Idle only a fraction of these funds are used for Trades. 
+
+This has provide an opportunity to create a DEFI protocol that is both an AMM and a lending pool, a protocol that provides double income for Liquidity Providers. In Liquidity LPs earn from swap fees as well as interest from loans. Generating more incomes for them
+
 
 ## Key Features:
 
@@ -24,6 +27,6 @@ Overview: Liquidity is a cutting-edge decentralized finance (DeFi) platform that
 1. Traders: Benefit from enhanced liquidity and improved trading conditions.
 2. Lenders: Earn interest on their digital assets by providing liquidity to the lending protocol.
 3. Borrowers: Access funding opportunities using their digital holdings as collateral.
-4. DeFi Enthusiasts: Contribute to a decentralized and community-driven protocol shaping the future of DeFi.
+4. DEFI Enthusiasts: Contribute to a decentralized and community-driven protocol shaping the future of DEFI.
 
-Join the Liquidity Fusion community today and be part of a revolutionary DeFi project!
+Join the Liquidity community today and be part of a revolutionary DEFI project!

@@ -6,11 +6,13 @@ import { useAccount, useReadContract } from "wagmi"
 import { FACTORY, ROUTER } from "@/lib/constants"
 import FactoryAbi from "@/abi/contracts/LFactory.sol/LFactory.json"
 import { toast } from "react-toastify"
-import { parseEther, zeroAddress } from "viem"
+import { Address, parseEther, zeroAddress } from "viem"
 import RouterAbi from "@/abi/contracts/periphery/LRouter.sol/LRouter.json"
 import useViemClient from "@/hooks/useClients"
 import useTokenApproval from "@/hooks/useTokenApproval"
 import useCurrentChain from "@/hooks/useCurrentChain"
+import useAmmPrice from "@/hooks/useAmmPrice"
+import { weiToEther } from "@/lib/utils"
 
 const AddLiquidity = () => {
 
@@ -31,25 +33,23 @@ const AddLiquidity = () => {
 
     const approvalA = useTokenApproval(tokenA?.address)
     const approvalB = useTokenApproval(tokenB?.address)
+    
 
     const chain = useCurrentChain()
 
     const pair = useReadContract({
         abi: FactoryAbi,
         address: FACTORY,
-        functionName: "getToken",
-        args: [tokenA, tokenB],
+        functionName: "getPool",
+        args: [tokenA?.address, tokenB?.address],
         chainId: chain.id,
     })
 
+    const { amountOut } = useAmmPrice(pair.data as Address, tokenA?.address as Address, valueAToWei, tokenB?.address as Address)
+
     useEffect(() => {
-        if (pair.isError) {
-            //toast.error(String(pair?.error.shortMessage))
-        }
-        if (pair.isSuccess) {
-            toast.success("Liquidty added succesfully")
-        }
-    }, [pair])
+        if (pair.data && pair.data != zeroAddress) setValueB(weiToEther(amountOut))
+    }, [amountOut, pair.data])
 
     let text = (!tokenA || !tokenB) ? "Select Tokens" : pair.data != zeroAddress ? "Add Liquidity" : "Create Pair"
 
@@ -64,7 +64,7 @@ const AddLiquidity = () => {
 
     const addLiquidity = async () => {
 
-        const slippage = 90n
+        const slippage = 50n
 
         setLoading(true)
 
@@ -89,8 +89,12 @@ const AddLiquidity = () => {
 
             await walletClient.writeContract(request)
 
+            setValueA("")
+            setValueB("")
+
+
         } catch (e) {
-            toast.error((e as any)?.reason)
+            toast.error((e as any)?.shortMessage)
             console.error(e)
         } finally {
             setLoading(false)

@@ -11,21 +11,16 @@ const BorrowMarketPage = () => {
 
             <div className="flex justify-center w-full">
 
-                <div className="border-white bg-black border-2 w-[500px] h-[400px] p-4 rounded-xl">
+                <div className="border-white bg-black border-2 w-4/5  p-4 rounded-xl">
 
                     <h2>Collaterals</h2>
 
-                    <CollateralCard 
-                        symbol={"debtInfo.collateral.symbol"} 
-                        collateralToken={collateral as Address}
-                        tokenToBorrow={token as Address}
-                        />
-
+                    <CollateralCard collateralToken={collateral as Address} tokenToBorrow={token as Address} />
 
 
                 </div>
-            </div>
 
+            </div>
 
         </div>
     )

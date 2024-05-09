@@ -121,30 +121,6 @@ contract LRouter is ReentrancyGuard {
         liquidity = LSwapPair(pair).mint(params.to);
     }
 
-    // function addLiquidityETH(
-    //     address token,
-    //     uint amountTokenDesired,
-    //     uint amountTokenMin,
-    //     uint amountETHMin,
-    //     address to,
-    //     uint deadline
-    // ) external virtual override payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) {
-    //     (amountToken, amountETH) = _addLiquidity(
-    //         token,
-    //         WETH,
-    //         amountTokenDesired,
-    //         msg.value,
-    //         amountTokenMin,
-    //         amountETHMin
-    //     );
-    //     address pair = LV1Library.pairFor(factory, token, WETH);
-    //     IERC20().safeTransferFrom(token, msg.sender, pair, amountToken);
-    //     IWETH(WETH).deposit{value: amountETH}();
-    //     assert(IWETH(WETH).transfer(pair, amountETH));
-    //     liquidity = LSwapPair(pair).mint(to);
-    //     // refund dust eth, if any
-    //     if (msg.value > amountETH) IERC20().safeTransferETH(msg.sender, msg.value - amountETH);
-    // }
 
     // **** REMOVE LIQUIDITY ****
     function removeLiquidity(
@@ -170,7 +146,7 @@ contract LRouter is ReentrancyGuard {
         uint112 amountOutMin,
         address[] calldata path,
         address to,
-        uint32 deadline
+        uint deadline
     ) external ensure(deadline) {
 
         bool isOutput0  =  path[0] > path[1];
@@ -240,20 +216,5 @@ contract LRouter is ReentrancyGuard {
         }
 
     }
-
-    // function swapTokensForExactTokens(
-    //     uint amountOut,
-    //     uint amountInMax,
-    //     address[] calldata path,
-    //     address to,
-    //     uint deadline
-    // ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
-    //     amounts = LV1Library.getAmountsIn(factory, amountOut, path);
-    //     require(amounts[0] <= amountInMax, ' EXCESSIVE_INPUT_AMOUNT');
-    //     IERC20().safeTransferFrom(
-    //         path[0], msg.sender, LV1Library.pairFor(factory, path[0], path[1]), amounts[0]
-    //     );
-    //     _swap(amounts, path, to);
-    // }
 
 }

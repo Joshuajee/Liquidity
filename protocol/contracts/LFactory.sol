@@ -23,6 +23,8 @@ contract LFactory is ILFactory {
     using SafeCast for *;
 
     uint public constant YEAR = 365 days;
+    uint public constant DECIMAL = 10**18;
+    uint public constant MAX_LTV = 8 * 10**17;
 
     address public immutable PAIR_REFERENCE;
 
@@ -108,6 +110,9 @@ contract LFactory is ILFactory {
 
         address ammPool = getPool(collateral, tokenToBorrow);
 
+        //Update Pools
+        update(ammPool);
+
         address collateralPool = getCollateralPool(collateral);
 
         LCollateralPool lCollateralPool = LCollateralPool(collateralPool); 
@@ -167,7 +172,7 @@ contract LFactory is ILFactory {
         oracle.update(pair);
     }
 
-    function update(address pair) external {
+    function update(address pair) public {
         oracle.update(pair);
     }
 
@@ -183,12 +188,7 @@ contract LFactory is ILFactory {
         LoanMarket [] memory loans = userLoans[borrower][collateral];
         if (loans.length > 256) revert("Too many loans on a collateral");
 
-        uint totalLTV;
-
-        for (uint i = 0; i < loans.length; i++) {
-            uint interest = loans[i].interestRate * (block.timestamp - loans[i].borrowedAt);
-            totalLTV += 1;
-        }
+        if (isLiquidatable(borrower, collateral)) revert ("LTV exceeded");
 
     }
 
@@ -201,23 +201,27 @@ contract LFactory is ILFactory {
     }
 
 
-    function getLoanStats(address borrower, address collateral) external returns (uint totalLTV, uint totalDebt, uint totalInterest) {
+    function getLoanStats(address borrower, address collateral) public returns (uint totalLTV, uint totalDebt, uint totalInterest, uint8 loanCount) {
 
         LoanMarket [] memory loans = userLoans[borrower][collateral];
 
-        for (uint i; i < loans.length; ++i) {
+        loanCount = uint8(loans.length);
+
+        for (uint i; i < loanCount; ++i) {
             uint interest = _calculateInterest(loans[i]);
-            totalDebt += loans[i].amount;
-            totalInterest += interest;
-            totalLTV += oracle.consult(collateral, loans[i].amount + interest, loans[i].tokenBorrowed);
+            totalInterest += oracle.consult(collateral, interest, loans[i].tokenBorrowed);
+            totalDebt += oracle.consult(collateral, loans[i].amount, loans[i].tokenBorrowed);
 
         }
 
-        totalLTV = LCollateralPool(collateral).balanceOf(borrower) / totalLTV;
-
+        totalLTV = (totalDebt + totalInterest) * DECIMAL / LCollateralPool(getCollateralPool(collateral)).balanceOf(borrower);
     }
 
 
+    function isLiquidatable (address borrower, address collateral) public returns(bool) {
+       (uint totalLTV,,,) = getLoanStats(borrower, collateral);
+       return totalLTV >= MAX_LTV;
+    }
 
 
     function setOracle(LSlidingWindowOracle _oracle) external {

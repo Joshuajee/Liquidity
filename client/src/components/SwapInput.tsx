@@ -8,8 +8,8 @@ import useCurrentChain from "@/hooks/useCurrentChain";
 
 interface IProps {
     value: string;
-    setValue: (value: string) => void;
     selected?: IToken;
+    setValue: (value: string) => void;
     setSelected: (selected: IToken) => void;
 }
 
@@ -30,11 +30,12 @@ const SwapInput = ({ value, selected, setValue, setSelected} : IProps) => {
 
     useEffect(() => {
         refetch()
-    }, [selected?.address])
+    }, [selected?.address, value])
 
     useEffect(() => {
         if (isError) console.log(error)
     }, [isError, error])
+
 
     return (
         <div className="border-[1px] h-24 my-2 rounded-xl flex justify-between p-2">
