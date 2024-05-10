@@ -9,6 +9,7 @@ import { Address } from "viem"
 export interface IAmmPool {
     token0: Address;
     token1: Address;
+    pool: Address;
     reserve0: bigint;
     reserve1: bigint;
     fee0: bigint;

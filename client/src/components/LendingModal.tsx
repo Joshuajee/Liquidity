@@ -4,7 +4,7 @@ import useTokenApproval from "@/hooks/useTokenApproval";
 import { ChangeEvent, useState } from "react";
 import { toast } from "react-toastify";
 import { FACTORY, ROUTER } from "@/lib/constants";
-import useViemClient from "@/hooks/useClients";
+import useViemClient from "@/hooks/useViemClient";
 import RouterAbi from "@/abi/contracts/periphery/LRouter.sol/LRouter.json"
 import FactoryAbi from "@/abi/contracts/LFactory.sol/LFactory.json"
 import { useAccount } from "wagmi";

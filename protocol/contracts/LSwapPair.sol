@@ -318,22 +318,21 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
      * @notice Withdraws the fees accrued to the address `to`.
      * @dev Transfers the accumulated fees in weth of the liquidty proivder
      * @param to The address to which the fees will be withdrawn.
-     * Post-conditions:
-     * - The `feesPerTokenPaid` should reflect the latest `feesPerTokenStored` value for the address `to`.
-     * - The `lpFees` owed to the address `to` are reset to 0.
-     * - The `_pendingLiquidityFees` state variable is decreased by the amount of fees withdrawn.
      */
     function withdrawFees(address to) external {
-        // uint256 totalFees = _earned(to, feesPerTokenStored);
-
-        // if (totalFees != 0) {
-        //     feesPerTokenPaid[to] = feesPerTokenStored;
-        //     // q- what are you for?
-        //     lpFees[to] = 0;
-        //     _pendingLiquidityFees -= uint112(totalFees);
-        //     IERC20(_weth).safeTransfer(to, totalFees);
-        // }
-        // is there a need to check if weth balance is in sync with reserve and fees?
+        (uint256 totalFees0, uint256 totalFees1) = _earned(to, feesPerTokenStored0, feesPerTokenStored1);
+        if (totalFees0 != 0) {
+            feesPerTokenPaid0[to] = feesPerTokenStored0;
+            lpFees0[to] = 0;
+            _pendingLiquidityFees0 -= totalFees0;
+            IERC20(_token0).safeTransfer(to, totalFees0);
+        }
+        if (totalFees1 != 0) {
+            feesPerTokenPaid1[to] = feesPerTokenStored1;
+            lpFees1[to] = 0;
+            _pendingLiquidityFees1 -= totalFees1;
+            IERC20(_token1).safeTransfer(to, totalFees1);
+        }
     }
 
     /* ----------------------------- INTERNAL FUNCTIONS ----------------------------- */
@@ -401,6 +400,8 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
         returns (uint112 feesLp0, uint112 feesLp1)
     {
 
+        uint256 totalSupply_ = totalSupply();
+
         // lp fess is fixed 90% of the fees collected of total 99 bps
         feesLp0 = (feesCollected0 * 90) / 100;
         feesLp1 = (feesCollected1 * 90) / 100;
@@ -410,6 +411,9 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard {
 
         _pendingLiquidityFees0 += feesLp0;
         _pendingLiquidityFees1 += feesLp1;
+
+        feesPerTokenStored0 += ((uint(feesLp0) * 1e18) / totalSupply_);
+        feesPerTokenStored1 += ((uint(feesLp1) * 1e18) / totalSupply_);
 
     }
 

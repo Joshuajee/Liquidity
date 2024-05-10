@@ -17,6 +17,7 @@ const BorrowMarketPage = () => {
 
                     <CollateralCard collateralToken={collateral as Address} tokenToBorrow={token as Address} />
 
+                    <CollateralCard collateralToken={collateral as Address} tokenToBorrow={token as Address} />
 
                 </div>
 

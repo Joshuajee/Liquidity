@@ -9,7 +9,7 @@ import { toast } from "react-toastify"
 import { Address, parseEther, zeroAddress } from "viem"
 import FactoryAbi from "@/abi/contracts/LFactory.sol/LFactory.json"
 import { useAccount, useReadContract } from "wagmi"
-import useViemClient from "@/hooks/useClients"
+import useViemClient from "@/hooks/useViemClient"
 import RouterAbi from "@/abi/contracts/periphery/LRouter.sol/LRouter.json"
 import useAmmPrice from "@/hooks/useAmmPrice"
 import { weiToEther } from "@/lib/utils"
@@ -64,7 +64,7 @@ const SwapPage = () => {
     } 
 
     const swap = async () => {
-        const slippage = 60n
+        const slippage = 90n
         setLoading(true)
         try {
             const { request } = await publicClient.simulateContract({
@@ -76,7 +76,7 @@ const SwapPage = () => {
                     valueBToWei * slippage / 100n, 
                     [tokenA?.address, tokenB?.address],
                     address, 
-                    Date.now() * 2
+                    parseInt(((Date.now() + 3600000) / 1000).toString())
                 ],
                 account: address
             })

@@ -4,7 +4,7 @@ import TokenAbi from "@/abi/contracts/mocks/MockERC20.sol/MockERC20.json"
 import { ROUTER } from "@/lib/constants"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
-import useViemClient from "./useClients"
+import useViemClient from "./useViemClient"
 import useCurrentChain from "./useCurrentChain"
 
 const useTokenApproval = (token?: Address) => {

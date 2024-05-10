@@ -2,8 +2,8 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import LFactoryModule, { DAIModule, LSwapPairModule, USDCModule, USDTModule, WBTCModule } from "./Liquidity";
 import { maxUint256, parseEther } from "viem";
 
-const deposit0 = parseEther("1000", "wei")
-const deposit1 = parseEther("1000", "wei")
+const deposit0 = parseEther("10000000", "wei")
+const deposit1 = parseEther("10000000", "wei")
 
 const account = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 
@@ -58,31 +58,81 @@ export const USDCAndDAIPairModule = buildModule("USDCAndDAIPairModule", (m) => {
 
 
 
-const OperationsModule = buildModule("OperationsModule", (m) => {
+export const USDCAndWBTCPairModule = buildModule("USDCAndWBTCPairModule", (m) => {
 
   const { TUSDC } = m.useModule(USDCModule)
-  const { TUSDT } = m.useModule(USDTModule)
-  const { TDAI  } = m.useModule(DAIModule)
   const { TWBTC } = m.useModule(WBTCModule)
 
+  const { LRouter } = m.useModule(LFactoryModule)
+
+  const input : any = [ TUSDC, TWBTC, deposit0, deposit1 / 630000n, 0n, 0n,  account, "100000000000000000"]
+
+  m.call(LRouter, "addLiquidity", [input])
+
+  return { TUSDC, TWBTC };
+
+});
+
+
+export const USDTAndDAIPairModule = buildModule("USDTAndDAIPairModule", (m) => {
+
+  const { TUSDT } = m.useModule(USDTModule)
+  const { TDAI } = m.useModule(DAIModule)
+
+  const { LRouter } = m.useModule(LFactoryModule)
+
+  const input : any = [ TUSDT, TDAI, deposit0, deposit1, 0n, 0n,  account, "100000000000000000"]
+
+  m.call(LRouter, "addLiquidity", [input])
+
+  return { TUSDT, TDAI };
+
+});
+
+
+export const USDTAndWBTCPairModule = buildModule("USDTAndWBTCPairModule", (m) => {
+
+  const { TUSDT } = m.useModule(USDTModule)
+  const { TWBTC } = m.useModule(WBTCModule)
+
+  const { LRouter } = m.useModule(LFactoryModule)
+
+  const input : any = [ TUSDT, TWBTC, deposit0, deposit1 / 63000n, 0n, 0n,  account, "100000000000000000"]
+
+  m.call(LRouter, "addLiquidity", [input])
+
+  return { TUSDT, TWBTC };
+
+});
+
+
+export const DAIAndWBTCPairModule = buildModule("DAIAndWBTCPairModule", (m) => {
+
+  const { TDAI } = m.useModule(DAIModule)
+  const { TWBTC } = m.useModule(WBTCModule)
+
+  const { LRouter } = m.useModule(LFactoryModule)
+
+  const input : any = [ TDAI, TWBTC, deposit0, deposit1 / 63000n, 0n, 0n,  account, "100000000000000000"]
+
+  m.call(LRouter, "addLiquidity", [input])
+
+  return { TDAI, TWBTC };
+
+});
+
+const OperationsModule = buildModule("OperationsModule", (m) => {
+
   m.useModule(ApprovalModule)
+
   m.useModule(USDCAndUSDTPairModule)
   m.useModule(USDCAndDAIPairModule)
+  m.useModule(USDCAndWBTCPairModule)
+  m.useModule(USDTAndDAIPairModule)
+  m.useModule(USDTAndWBTCPairModule)
+  m.useModule(DAIAndWBTCPairModule)
 
   const { LFactory, LRouter } = m.useModule(LFactoryModule)
-
-  // m.call(LFactory, "createPair", [TUSDC, TDAI])
-  // m.call(LFactory, "createPair", [TUSDC, TWBTC])
-
-  //m.call(TUSDC, "transfer", [LSwapPair, deposit0])
-
-  // await MockERC20_1.write.transfer([LSwapPairPool.address, deposit1]) 
-
-  // await LSwapPairPool.write.mint([account1.account.address])
-
-  // const LFactory = m.contract("LFactory", [LSwapPair]);
-
-  // const LRouter = m.contract("LRouter", [LFactory, LFactory]);
 
   return { LFactory, LRouter };
 
