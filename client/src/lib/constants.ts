@@ -38,3 +38,5 @@ export const ADDRESS_TO_SYMBOL = {
     [import.meta.env.VITE_WBTC]: "TWBTC",
     [import.meta.env.VITE_DAI]: "TDAI"
 }
+
+export const YEAR = 365 * 24 * 3600

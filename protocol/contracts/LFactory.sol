@@ -7,7 +7,6 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ILFactory} from "./interfaces/ILFactory.sol";
 import "./LSwapPair.sol";
-
 import "./LCollateralPool.sol";
 import {LSlidingWindowOracle} from  "./utils/LSlidingWindowOracle.sol";
 import "hardhat/console.sol";
@@ -149,7 +148,7 @@ contract LFactory is ILFactory {
         uint112 interest = uint112(loan.accruedInterest + ((uint32(block.timestamp) - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR));
         (uint112 debtToPay, uint112 interestToPay) = _splitRepayment(loan.amount, interest, amount);
         LSwapPair(ammPool).repay(tokenToBorrow, borrower, debtToPay, interestToPay);
-        if ((loan.amount + interest) < amount) {
+        if ((loan.amount + interest) <= amount) {
             uint length = getUserLoans(collateral, tokenToBorrow).length;
             if (length > 1) userLoans[borrower][collateral][index] = userLoans[borrower][collateral][length - 1];
             userLoans[borrower][collateral].pop();
@@ -219,7 +218,7 @@ contract LFactory is ILFactory {
         return loan.accruedInterest + (((block.timestamp - loan.borrowedAt) * loan.interestRate * loan.amount) / YEAR);
     }
 
-    function getUserLoans (address borrower, address collateral) public returns (LoanMarket[] memory) {
+    function getUserLoans(address borrower, address collateral) public returns (LoanMarket[] memory) {
         return userLoans[borrower][collateral];
     }
 

@@ -161,12 +161,19 @@ contract LRouter is ReentrancyGuard {
   
         LSwapPair(pair).swap(amount0Out, amount1Out, to);
     }
+    
 
+
+
+    // function repayFull(address borrower, address collateral, address tokenToBorrow, uint index) public checkLoan(borrower, collateral) returns (uint112 amount) {
+    //     LoanMarket storage loan = userLoans[borrower][collateral][index];
+    //     uint112 interest = uint112(loan.accruedInterest + ((uint32(block.timestamp) - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR));
+    //     amount = loan.amount + interest;
+    //     repay(borrower, collateral, tokenToBorrow, index, amount);
+    // }
 
 
     //Collateral
-
-
     function depositCollateral(IERC20 token, uint assets, address receiver) external virtual returns (uint amountA, uint amountB, address pair) {
 
         address collateral =  ILFactory(FACTORY).getCollateralPool(address(token));

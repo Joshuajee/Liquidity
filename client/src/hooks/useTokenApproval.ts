@@ -7,7 +7,7 @@ import { toast } from "react-toastify"
 import useViemClient from "./useViemClient"
 import useCurrentChain from "./useCurrentChain"
 
-const useTokenApproval = (token?: Address) => {
+const useTokenApproval = (token?: Address, contract?: Address) => {
 
     const [loading, setLoading] = useState(false)
 
@@ -21,7 +21,7 @@ const useTokenApproval = (token?: Address) => {
         abi: TokenAbi,
         address: token,
         functionName: "allowance",
-        args: [address, ROUTER],
+        args: [address, contract && ROUTER],
         chainId: chain.id,
         account: address
     })

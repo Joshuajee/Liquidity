@@ -17,7 +17,7 @@ const BorrowMarketPage = () => {
 
                     <div className="flex gap-4 justify-center">
 
-                        <CollateralCard collateralToken={collateral as Address} tokenToBorrow={token as Address} />
+                        <CollateralCard isAmmToken={false} collateralToken={collateral as Address} tokenToBorrow={token as Address} />
 
                         <CollateralCard isAmmToken={true} collateralToken={collateral as Address} tokenToBorrow={token as Address} />
 

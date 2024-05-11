@@ -391,9 +391,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64",
+            "internalType": "uint32",
             "name": "borrowedAt",
-            "type": "uint64"
+            "type": "uint32"
           }
         ],
         "internalType": "struct ILFactory.LoanMarket[]",
@@ -650,9 +650,9 @@
         "type": "uint8"
       },
       {
-        "internalType": "uint64",
+        "internalType": "uint32",
         "name": "borrowedAt",
-        "type": "uint64"
+        "type": "uint32"
       }
     ],
     "stateMutability": "view",

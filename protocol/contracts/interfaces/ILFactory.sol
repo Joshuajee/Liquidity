@@ -6,12 +6,11 @@ interface ILFactory {
     struct LoanMarket {
         address ammPool;
         address collateralPool;
-
         address tokenBorrowed;
         uint112 amount;
         uint112 accruedInterest;
         uint8 interestRate;
-        uint64 borrowedAt;
+        uint32 borrowedAt;
     }
 
     function getPool(address _token0, address _token1) external view returns (address);
