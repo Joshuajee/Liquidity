@@ -11,13 +11,17 @@ const BorrowMarketPage = () => {
 
             <div className="flex justify-center w-full">
 
-                <div className="border-white bg-black border-2 w-4/5  p-4 rounded-xl">
+                <div className="border-white bg-black border-2 w-11/12  p-4 rounded-xl">
 
-                    <h2>Collaterals</h2>
+                    <h2 className="text-center text-3xl font-bold">Collaterals</h2>
 
-                    <CollateralCard collateralToken={collateral as Address} tokenToBorrow={token as Address} />
+                    <div className="flex gap-4 justify-center">
 
-                    <CollateralCard collateralToken={collateral as Address} tokenToBorrow={token as Address} />
+                        <CollateralCard collateralToken={collateral as Address} tokenToBorrow={token as Address} />
+
+                        <CollateralCard isAmmToken={true} collateralToken={collateral as Address} tokenToBorrow={token as Address} />
+
+                    </div>
 
                 </div>
 

@@ -11,7 +11,7 @@ import { FACTORY } from "@/lib/constants"
 import { useNavigate } from "react-router-dom"
 
 
-const CollateralCard = ({ collateralToken, tokenToBorrow } : { collateralToken: Address, tokenToBorrow: Address }) => {
+const CollateralCard = ({ collateralToken, tokenToBorrow, isAmmToken } : { collateralToken: Address, tokenToBorrow: Address, isAmmToken: boolean }) => {
 
     const navigate = useNavigate()
     const { address } = useAccount() 
@@ -71,10 +71,7 @@ const CollateralCard = ({ collateralToken, tokenToBorrow } : { collateralToken: 
 
     const loanData = loanStats.data as bigint[]
 
-    console.log("AMM: ", ammPool?.data)
-
-    console.log("LOAN", loanStats)
-
+    console.log(isAmmToken, ammPool)
 
     return (
         <>

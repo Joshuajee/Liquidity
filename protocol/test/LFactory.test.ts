@@ -305,4 +305,90 @@ describe("LFactory", function () {
 
   });
 
+
+
+  describe("LP - Borrowing - Success", function () {
+
+    it("Should be able to borrow", async function () {
+
+      const { LFactory, account1, LSwapPairPool, MockERC20, MockERC20_1 } = await loadFixture(deployCollateralPoolAndAddLiquidity);
+
+      const amount = parseEther("5", "wei")
+
+      const initialBorrowerBalance = await MockERC20_1.read.balanceOf([account1.account.address])
+
+      await LFactory.write.borrow([LSwapPairPool.address, MockERC20_1.address, amount])
+
+      const userLoans = await LFactory.read.getUserLoans([account1.account.address, LSwapPairPool.address])
+      console.log(userLoans)
+
+      console.log(await MockERC20_1.read.balanceOf([account1.account.address]), initialBorrowerBalance)
+
+      console.log(await LSwapPairPool.read.getReserves())
+
+      console.log(await LSwapPairPool.read.getActualReserves())
+
+      console.log(await LFactory.read.getLoanStats([account1.account.address, LSwapPairPool.address]))
+
+    });
+
+
+    // it("Should Borrow at 50% LTV", async function () {
+
+    //   const { LFactory, account1, LSwapPairPool, MockERC20, MockERC20_1, amount: amount2  } = await loadFixture(deployCollateralPoolAndAddLiquidity);
+
+    //   const amount = amount2 / 2n
+
+    //   const initialPoolBalance = await MockERC20_1.read.balanceOf([LSwapPairPool.address])
+
+    //   const initialBorrowerBalance = await MockERC20_1.read.balanceOf([account1.account.address])
+
+    //   await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount])
+
+    //   const userLoans = await LFactory.read.getUserLoans([account1.account.address, MockERC20.address])
+
+    //   expect(await MockERC20_1.read.balanceOf([LSwapPairPool.address])).to.be.equal(initialPoolBalance - amount)
+
+    //   expect(await MockERC20_1.read.balanceOf([account1.account.address])).to.be.equal(initialBorrowerBalance + amount)
+
+    //   console.log(userLoans)
+    //   console.log(await LFactory.read.getLoanStats([account1.account.address, MockERC20.address]))
+
+    // });
+
+    // it("Should be able to borrow twice", async function () {
+
+    //   const { LFactory, MockERC20, MockERC20_1, account1 } = await loadFixture(deployCollateralPoolAndAddLiquidity);
+
+    //   const amount = parseEther("2", "wei")
+
+    //   await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount])
+
+    //   await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount])
+
+    //   console.log(await LFactory.read.getUserLoans([account1.account.address, MockERC20.address]))
+
+    // });
+
+
+    // it("Should be able to repay loan", async function () {
+
+    //   const { LFactory, MockERC20, MockERC20_1, account1 } = await loadFixture(deployCollateralPoolAndAddLiquidity);
+
+    //   const amount = parseEther("5", "wei")
+
+    //   await MockERC20_1.write.approve([LFactory.address, amount])
+
+    //   await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount])
+
+    //   await LFactory.write.repay([MockERC20.address, MockERC20_1.address, 0n, amount * 2n])
+
+    //   console.log(await LFactory.read.getUserLoans([account1.account.address, MockERC20.address]))
+
+    // });
+
+
+  });
+
+
 });

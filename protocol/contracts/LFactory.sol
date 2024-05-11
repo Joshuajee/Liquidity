@@ -23,6 +23,7 @@ contract LFactory is ILFactory {
     using SafeCast for *;
 
     uint public constant YEAR = 365 days;
+    uint public constant ONE_PERCENT = 1**16;
     uint public constant DECIMAL = 10**18;
     uint public constant MAX_LTV = 8 * 10**17;
 
@@ -30,6 +31,7 @@ contract LFactory is ILFactory {
 
     LSlidingWindowOracle public oracle;
 
+    mapping(address => bool) public isAmmPool;
     mapping(address => mapping(address => address)) private pairs;
     mapping(address => address) private collateralPools;
 
@@ -62,6 +64,8 @@ contract LFactory is ILFactory {
         if (pairs[token0][token1] != address(0)) revert PairAlreadyExist(pairs[token0][token1]);
         
         pairs[token0][token1] = pair;
+
+        isAmmPool[pair] = true;
 
     }
 
@@ -105,50 +109,46 @@ contract LFactory is ILFactory {
     }
 
     function borrow(address collateral, address tokenToBorrow, uint112 amount) external checkLoan(msg.sender, collateral) {
-
+        address ammPool;
         address borrower = msg.sender;
-
-        address ammPool = getPool(collateral, tokenToBorrow);
-
+        if (isAmmPool[collateral]) {
+            ammPool = collateral;
+            LSwapPair(ammPool).borrow(tokenToBorrow, borrower, amount);
+            userLoans[borrower][ammPool].push(LoanMarket({
+                ammPool: ammPool,
+                collateralPool: ammPool,
+                tokenBorrowed: tokenToBorrow,
+                amount: amount,
+                accruedInterest: 0,
+                interestRate: 10,
+                borrowedAt: uint32(block.timestamp)
+            }));
+        } else {
+            ammPool = getPool(collateral, tokenToBorrow);
+            address collateralPool = getCollateralPool(collateral);
+            LSwapPair(ammPool).borrow(tokenToBorrow, borrower, amount);
+            userLoans[borrower][collateral].push(LoanMarket({
+                ammPool: ammPool,
+                collateralPool: collateralPool,
+                tokenBorrowed: tokenToBorrow,
+                amount: amount,
+                accruedInterest: 0,
+                interestRate: 10,
+                borrowedAt: uint32(block.timestamp)
+            }));
+        }
         //Update Pools
         update(ammPool);
-
-        address collateralPool = getCollateralPool(collateral);
-
-        LCollateralPool lCollateralPool = LCollateralPool(collateralPool); 
-
-        uint borrowerBalance = lCollateralPool.balanceOf(borrower);
-
-        LSwapPair(ammPool).borrow(tokenToBorrow, borrower, amount);
-
-        userLoans[borrower][collateral].push(LoanMarket({
-            ammPool: ammPool,
-            collateralPool: collateralPool,
-            tokenBorrowed: tokenToBorrow,
-            amount: amount,
-            accruedInterest: 0,
-            interestRate: 1,
-            borrowedAt: uint32(block.timestamp)
-        }));
-
     }
 
 
-    function repay(address collateral, address tokenToBorrow, uint index, uint112 amount) public checkLoan(msg.sender, collateral) {
-
-        address borrower = msg.sender;
-
+    function repay(address borrower, address collateral, address tokenToBorrow, uint index, uint112 amount) public checkLoan(borrower, collateral) {
         address ammPool = getPool(collateral, tokenToBorrow);
-
         LoanMarket storage loan = userLoans[borrower][collateral][index];
-        
         //Dangerous casting
         uint112 interest = uint112(loan.accruedInterest + ((uint32(block.timestamp) - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR));
-
         (uint112 debtToPay, uint112 interestToPay) = _splitRepayment(loan.amount, interest, amount);
-
         LSwapPair(ammPool).repay(tokenToBorrow, borrower, debtToPay, interestToPay);
-
         if ((loan.amount + interest) < amount) {
             uint length = getUserLoans(collateral, tokenToBorrow).length;
             if (length > 1) userLoans[borrower][collateral][index] = userLoans[borrower][collateral][length - 1];
@@ -158,12 +158,35 @@ contract LFactory is ILFactory {
             loan.accruedInterest += (interest - interestToPay);
             loan.amount -= debtToPay;
         }
-
     }
 
-    function repayFull(address collateral, address tokenToBorrow, uint index) external checkLoan(msg.sender, collateral) {
+    function repayFull(address borrower, address collateral, address tokenToBorrow, uint index) public checkLoan(borrower, collateral) returns (uint112 amount) {
+        LoanMarket storage loan = userLoans[borrower][collateral][index];
+        uint112 interest = uint112(loan.accruedInterest + ((uint32(block.timestamp) - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR));
+        amount = loan.amount + interest;
+        repay(borrower, collateral, tokenToBorrow, index, amount);
+    }
 
-        
+
+
+    function liquidate(address borrower, address collateral, address tokenBorrowed, uint index) external {
+        if (!isLiquidatable(borrower, collateral)) revert("Healthy");
+        address liquidator = msg.sender;
+        uint amount = repayFull(borrower, collateral, tokenBorrowed, index);
+        uint liquidatorFee = amount + (amount * ONE_PERCENT/DECIMAL);
+        if (isAmmPool[collateral]) {
+            (address tokenA,) = LSwapPair(collateral).getTokens(); 
+            if (tokenA == tokenBorrowed) {
+                // to work on
+            } else {
+                liquidatorFee = oracle.consult(tokenA, liquidatorFee, tokenBorrowed);
+            }
+        } else {
+            liquidatorFee = oracle.consult(collateral, liquidatorFee, tokenBorrowed);
+            LCollateralPool(collateral).seizeTokens(borrower, liquidator, liquidatorFee); 
+        }
+
+
     }
 
 
@@ -202,19 +225,31 @@ contract LFactory is ILFactory {
 
 
     function getLoanStats(address borrower, address collateral) public returns (uint totalLTV, uint totalDebt, uint totalInterest, uint8 loanCount) {
-
         LoanMarket [] memory loans = userLoans[borrower][collateral];
-
         loanCount = uint8(loans.length);
-
-        for (uint i; i < loanCount; ++i) {
-            uint interest = _calculateInterest(loans[i]);
-            totalInterest += oracle.consult(collateral, interest, loans[i].tokenBorrowed);
-            totalDebt += oracle.consult(collateral, loans[i].amount, loans[i].tokenBorrowed);
-
+        if (isAmmPool[collateral]) {
+            for (uint i; i < loanCount; ++i) {
+                uint amount = loans[i].amount;
+                address tokenBorrowed = loans[i].tokenBorrowed;
+                (address tokenA,) = LSwapPair(collateral).getTokens(); 
+                uint interest = _calculateInterest(loans[i]);
+                if (tokenA == tokenBorrowed) {
+                    totalInterest += interest;
+                    totalDebt += amount;
+                } else {
+                    totalInterest += oracle.consult(tokenA, interest, tokenBorrowed);
+                    totalDebt += oracle.consult(tokenA, amount, tokenBorrowed);
+                }
+            }
+            totalLTV = (totalDebt + totalInterest) * DECIMAL / LSwapPair(collateral).balanceOf(borrower);
+        } else {
+            for (uint i; i < loanCount; ++i) {
+                uint interest = _calculateInterest(loans[i]);
+                totalInterest += oracle.consult(collateral, interest, loans[i].tokenBorrowed);
+                totalDebt += oracle.consult(collateral, loans[i].amount, loans[i].tokenBorrowed);
+            }
+            totalLTV = (totalDebt + totalInterest) * DECIMAL / LCollateralPool(getCollateralPool(collateral)).balanceOf(borrower);
         }
-
-        totalLTV = (totalDebt + totalInterest) * DECIMAL / LCollateralPool(getCollateralPool(collateral)).balanceOf(borrower);
     }
 
 
