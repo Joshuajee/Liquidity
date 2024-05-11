@@ -24,7 +24,6 @@ abstract contract LSwapERC20 {
     mapping(address => mapping(address => uint256)) private _allowances;
 
     // liquidity lock
-    //q- why uint32?
     mapping(address => uint32) internal _locked;
 
     // Events

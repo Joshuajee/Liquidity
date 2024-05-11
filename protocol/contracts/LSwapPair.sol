@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
+import {LSwapERC20} from "./utils/LSwapERC20.sol";
+import {Initialize} from "./utils/Initialize.sol";
+
 // library imports
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -12,7 +15,6 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 // interfaces
 import {ILFactory} from "./interfaces/ILFactory.sol";
-import {LSwapERC20} from "./utils/LSwapERC20.sol";
 import "hardhat/console.sol";
 
 /**
@@ -23,7 +25,7 @@ import "hardhat/console.sol";
  * Mint, Burn, Swap, and Takeover are handled in this contract.
  * @author LSwapPair -- Joshua Evuetapha
  */
-contract LSwapPair is LSwapERC20, ReentrancyGuard {
+contract LSwapPair is LSwapERC20, ReentrancyGuard, Initialize {
 
     error InsufficientOutputAmount();
     error InsufficientAmountOut();

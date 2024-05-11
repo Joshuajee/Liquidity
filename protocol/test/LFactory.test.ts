@@ -279,7 +279,24 @@ describe("LFactory", function () {
 
       await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount])
 
-      await LFactory.write.repay([MockERC20.address, MockERC20_1.address, 0n, amount * 2n])
+      await LFactory.write.repay([account1.account.address, MockERC20.address, MockERC20_1.address, 0n, amount * 2n])
+
+      console.log(await LFactory.read.getUserLoans([account1.account.address, MockERC20.address]))
+
+    });
+
+
+    it("Should be able to repay loan full", async function () {
+
+      const { LFactory, MockERC20, MockERC20_1, account1 } = await loadFixture(deployCollateralPoolAndAddLiquidity);
+
+      const amount = parseEther("5", "wei")
+
+      await MockERC20_1.write.approve([LFactory.address, amount])
+
+      await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount])
+
+      await LFactory.write.repayFull([account1.account.address, MockERC20.address, MockERC20_1.address, 0n])
 
       console.log(await LFactory.read.getUserLoans([account1.account.address, MockERC20.address]))
 

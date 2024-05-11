@@ -9,10 +9,11 @@ import {ILFactory} from "./interfaces/ILFactory.sol";
 import "./LSwapPair.sol";
 import "./LCollateralPool.sol";
 import {LSlidingWindowOracle} from  "./utils/LSlidingWindowOracle.sol";
+import {Initialize} from "./utils/Initialize.sol";
 import "hardhat/console.sol";
 
 
-contract LFactory is ILFactory {
+contract LFactory is ILFactory, Initialize {
 
     error PairAlreadyExist(address pair);
     error PoolAlreadyExist(address pool);
@@ -258,7 +259,7 @@ contract LFactory is ILFactory {
     }
 
 
-    function setOracle(LSlidingWindowOracle _oracle) external {
+    function setOracle(LSlidingWindowOracle _oracle) external OnlyInitializer {
         oracle = _oracle;
     }
 

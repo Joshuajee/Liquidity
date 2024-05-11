@@ -9,6 +9,8 @@ import "hardhat/console.sol";
 
 contract LCollateralPool is ERC4626 {
 
+    using SafeERC20 for IERC20;
+
     error OnlyFactory();
 
     address immutable public FACTORY;
@@ -23,11 +25,7 @@ contract LCollateralPool is ERC4626 {
     }
 
     function seizeTokens(address debtor, address liquidator, uint amount) external isFactory {
-        //_asset.safeTransferFrom(debtor, liquidator, amount);
+        IERC20(asset()).safeTransferFrom(debtor, liquidator, amount);
     }
-
-
-
-    // function 
 
 }
