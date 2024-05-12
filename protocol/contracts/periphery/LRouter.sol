@@ -130,7 +130,7 @@ contract LRouter is ReentrancyGuard {
         uint amountAMin,
         uint amountBMin,
         address to,
-        uint deadline
+        uint32 deadline
     ) public ensure(deadline) returns (uint amountA, uint amountB) {
         address pair = ILFactory(FACTORY).getPool(tokenA, tokenB);
         LSwapPair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
@@ -139,6 +139,21 @@ contract LRouter is ReentrancyGuard {
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
         require(amountA >= amountAMin, ' INSUFFICIENT_A_AMOUNT');
         require(amountB >= amountBMin, ' INSUFFICIENT_B_AMOUNT');
+    }
+
+    function removeLiquidityPair(
+        address pair,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint32 deadline
+    ) public ensure(deadline) returns (uint amountA, uint amountB) {
+        LSwapPair(pair).transferFrom(msg.sender, pair, liquidity); // send liquidity to pair
+        (uint amount0, uint amount1) = LSwapPair(pair).burn(to);
+        //(amountA, amountB) = LSwapPair(pair).getTokens(); tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
+        require(amount0 >= amountAMin, ' INSUFFICIENT_A_AMOUNT');
+        require(amount1 >= amountBMin, ' INSUFFICIENT_B_AMOUNT');
     }
 
     function swapExactTokenForToken(
@@ -162,17 +177,6 @@ contract LRouter is ReentrancyGuard {
         LSwapPair(pair).swap(amount0Out, amount1Out, to);
     }
     
-
-
-
-    // function repayFull(address borrower, address collateral, address tokenToBorrow, uint index) public checkLoan(borrower, collateral) returns (uint112 amount) {
-    //     LoanMarket storage loan = userLoans[borrower][collateral][index];
-    //     uint112 interest = uint112(loan.accruedInterest + ((uint32(block.timestamp) - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR));
-    //     amount = loan.amount + interest;
-    //     repay(borrower, collateral, tokenToBorrow, index, amount);
-    // }
-
-
     //Collateral
     function depositCollateral(IERC20 token, uint assets, address receiver) external virtual returns (uint amountA, uint amountB, address pair) {
 

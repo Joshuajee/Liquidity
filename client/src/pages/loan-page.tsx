@@ -25,7 +25,7 @@ const LoanPage = () => {
 
     const chain = useCurrentChain()
 
-    const { data } = useReadContract({
+    const { data, refetch } = useReadContract({
         abi: FactoryAbi,
         address: FACTORY,
         functionName: "getUserLoans",
@@ -34,29 +34,28 @@ const LoanPage = () => {
         account: address
     })
 
-    console.log({data})
-
     return (
         <div className="h-full w-full px-10 pt-20">
 
             <div className="flex justify-center w-full">
 
-                <div className="border-white bg-black border-2 w-4/5 h-[400px] p-4 rounded-xl">
+                <div className="border-white bg-black border-2 w-4/5 p-4 rounded-xl">
 
-                    <h2>Loans</h2>
+                    <h2 className="text-center font-bold text-2xl">Loans</h2>
 
 
-                    <div className="flex gap-4 justify-center">
+                    <div className="flex gap-4 flex-wrap">
 
                         {
                             (data as ILoan[])?.map((loan, index) => {
-                                console.log({loan})
                                 return (
                                     <LoanCard 
                                         key={index} 
                                         loan={loan} 
                                         index={index} 
-                                        collateral={collateral} />
+                                        collateral={collateral as Address}
+                                        refetch={refetch}
+                                        />
                                 )
                             })
                         }

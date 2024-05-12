@@ -35,7 +35,7 @@ describe("LRouter", function () {
 
     const data = await loadFixture(deploy);
 
-    const { account1, MockERC20, MockERC20_1 } = data
+    const { account1, MockERC20, MockERC20_1, LFactory } = data
 
     const deposit = parseEther("10000", "wei")
 
@@ -59,7 +59,11 @@ describe("LRouter", function () {
 
     await data.LRouter.write.addLiquidity([input])
 
-    return { ...data, deposit, MockERC20_2 }
+    const poolAddress = await LFactory.read.getPool([MockERC20.address, MockERC20_1.address])
+
+    const LSwapPairPool = await hre.viem.getContractAt("LSwapPair", poolAddress)
+
+    return { ...data, deposit, MockERC20_2, LSwapPairPool }
 
   }
 
@@ -142,6 +146,31 @@ describe("LRouter", function () {
       ]
 
       await LRouter.write.addLiquidity([input])
+
+    });
+    
+  });
+
+  describe("Remove Liquidity", function () {
+
+    it("Removing Liquidity should work", async function () {
+
+      const { LRouter, LSwapPairPool, MockERC20, MockERC20_1, account1, account2 } = await loadFixture(deployWithLiquidity);
+
+      await LSwapPairPool.write.approve([LRouter.address, maxUint256])
+
+      const shares = await LSwapPairPool.read.balanceOf([account1.account.address])
+
+      console.log({shares})
+
+      await LRouter.write.removeLiquidity([
+        MockERC20.address, MockERC20_1.address,
+        shares / 2n,
+        0n, 0n,
+        account2.account.address,
+        parseInt((Date.now() * 2 /1000).toString())
+      ])
+
 
     });
     

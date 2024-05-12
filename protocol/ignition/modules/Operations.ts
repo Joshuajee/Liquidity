@@ -2,8 +2,8 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import LFactoryModule, { DAIModule, LSwapPairModule, USDCModule, USDTModule, WBTCModule } from "./Liquidity";
 import { maxUint256, parseEther } from "viem";
 
-const deposit0 = parseEther("10000000", "wei")
-const deposit1 = parseEther("10000000", "wei")
+const deposit0 = parseEther("20000000", "wei")
+const deposit1 = parseEther("20000000", "wei")
 
 const account = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 
@@ -133,6 +133,9 @@ const OperationsModule = buildModule("OperationsModule", (m) => {
   m.useModule(DAIAndWBTCPairModule)
 
   const { LFactory, LRouter } = m.useModule(LFactoryModule)
+
+  //send funds
+  
 
   return { LFactory, LRouter };
 

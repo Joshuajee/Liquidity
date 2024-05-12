@@ -34,6 +34,11 @@
   },
   {
     "inputs": [],
+    "name": "AlreadyInitialized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "ERC1167FailedCreateClone",
     "type": "error"
   },

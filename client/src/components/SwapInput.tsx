@@ -9,12 +9,13 @@ import useCurrentChain from "@/hooks/useCurrentChain";
 interface IProps {
     value: string;
     selected?: IToken;
+    tag: string;
     setValue: (value: string) => void;
     setSelected: (selected: IToken) => void;
 }
 
 
-const SwapInput = ({ value, selected, setValue, setSelected} : IProps) => {
+const SwapInput = ({ value, selected, tag, setValue, setSelected} : IProps) => {
 
     const { address } = useAccount()
 
@@ -41,7 +42,7 @@ const SwapInput = ({ value, selected, setValue, setSelected} : IProps) => {
         <div className="border-[1px] h-24 my-2 rounded-xl flex justify-between p-2">
 
             <div>
-                <h4 className="text-xs">You Pay</h4>
+                <h4 className="text-xs">{tag}</h4>
                 <input 
                     value={value}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setValue(e.currentTarget.value)}

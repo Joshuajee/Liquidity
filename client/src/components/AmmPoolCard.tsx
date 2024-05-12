@@ -7,11 +7,12 @@ import useViemClient from "@/hooks/useViemClient";
 import { toast } from "react-toastify";
 import { useAccount } from "wagmi";
 import LSwapAbi from "@/abi/contracts/LSwapPair.sol/LSwapPair.json"
+import ModalWrapper from "./modals/ModalWrapper";
+import RemoveLiquidityModal from "./modals/RemoveLiquidityModal";
 
 interface IProps {
     pool: IAmmPool
 }
-
 
 interface IBorrow {
     token: Address;
@@ -28,6 +29,7 @@ const AmmPoolCard = ({ pool } : IProps) => {
     const { address } = useAccount()
 
     const [loading, setLoading] = useState(false)
+    const [open, setOpen] = useState(false)
 
     const { publicClient, walletClient } = useViemClient()
 
@@ -71,10 +73,18 @@ const AmmPoolCard = ({ pool } : IProps) => {
 
                     <p className="flex grow"> </p>
 
-                    <div className="">
-                        <Web3BtnSM loading={loading} onClick={collectFees}>
-                            Collect Fees
-                        </Web3BtnSM>
+                    <div className="flex gap-2 justify-center">
+                        
+                        <button 
+                            onClick={() => setOpen(true)}
+                            className="bg-blue-700 px-3 w-40 py-2 rounded-xl">
+                            Remove Liquidity
+                        </button>
+
+                        <div>
+                            <Web3BtnSM loading={loading} onClick={collectFees}> Collect Fees </Web3BtnSM>
+                        </div>
+
                     </div>
 
                 </div>
@@ -84,6 +94,11 @@ const AmmPoolCard = ({ pool } : IProps) => {
                 </p>
 
             </div>
+
+
+            <ModalWrapper open={open} close={() => setOpen(false)}>
+                <RemoveLiquidityModal pool={pool.pool} close={() => setOpen(false)} />
+            </ModalWrapper>
 
         </>
     )

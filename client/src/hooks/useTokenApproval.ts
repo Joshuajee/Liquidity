@@ -21,7 +21,7 @@ const useTokenApproval = (token?: Address, contract?: Address) => {
         abi: TokenAbi,
         address: token,
         functionName: "allowance",
-        args: [address, contract && ROUTER],
+        args: [address, contract ? contract : ROUTER],
         chainId: chain.id,
         account: address
     })
@@ -36,7 +36,7 @@ const useTokenApproval = (token?: Address, contract?: Address) => {
                 address: token as Address,
                 abi:TokenAbi,
                 functionName: 'approve',
-                args:  [ROUTER, maxUint256],
+                args:  [contract ? contract : ROUTER, maxUint256],
                 account: address,
                 chain
             })

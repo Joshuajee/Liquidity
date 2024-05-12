@@ -106,9 +106,9 @@ const SwapPage = () => {
 
                 <h2>Swap</h2>
 
-                <SwapInput value={valueA} setValue={setValueA} selected={tokenA} setSelected={setTokenA} />
+                <SwapInput tag="You Pay" value={valueA} setValue={setValueA} selected={tokenA} setSelected={setTokenA} />
 
-                <SwapInput value={valueB} setValue={setValueB} selected={tokenB} setSelected={setTokenB} />
+                <SwapInput tag="You Receive" value={valueB} setValue={setValueB} selected={tokenB} setSelected={setTokenB} />
 
                 <Web3Btn onClick={handleClick} loading={loading}>{text}</Web3Btn>
 

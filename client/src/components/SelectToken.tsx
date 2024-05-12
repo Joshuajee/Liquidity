@@ -1,5 +1,5 @@
 import { useState } from "react"
-import ModalWrapper from "./ModalWrapper"
+import ModalWrapper from "./modals/ModalWrapper"
 import { DEFAULT_TOKENS } from "@/lib/constants"
 import { IToken } from "@/lib/interfaces"
 

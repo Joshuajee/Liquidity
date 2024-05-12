@@ -1,5 +1,4 @@
 import { useAccount } from "wagmi"
-import useCurrentChain from "@/hooks/useCurrentChain"
 import { Address } from "viem"
 import { useMemo, useState } from "react"
 import { getTokenName, weiToCurrency } from "@/lib/utils"
@@ -15,18 +14,17 @@ import useTokenApproval from "@/hooks/useTokenApproval"
 interface IProps {
     index: number;
     loan: ILoan;
-    collateral: Address
+    collateral: Address;
+    refetch: () => void;
 }
 
-const LoanCard = ({ loan, collateral, index } : IProps) => {
-
-    const { tokenBorrowed, amount, borrowedAt, interestRate, accruedInterest,  } = loan
-
-    const approval = useTokenApproval(tokenBorrowed, FACTORY)
-
+const LoanCard = ({ loan, collateral, index, refetch } : IProps) => {
 
     const { publicClient, walletClient } = useViemClient()
     const { address } = useAccount() 
+    const { tokenBorrowed, amount, borrowedAt, interestRate, accruedInterest } = loan
+
+    const approval = useTokenApproval(tokenBorrowed, FACTORY)
 
     const [loading, setLoading] = useState(false)
 
@@ -52,6 +50,7 @@ const LoanCard = ({ loan, collateral, index } : IProps) => {
             })
             await walletClient.writeContract(request)
             toast.success("Repay successful")
+            refetch()
             close()
         } catch (e) {
             toast.error((e as any)?.shortMessage)
@@ -73,12 +72,11 @@ const LoanCard = ({ loan, collateral, index } : IProps) => {
         }  else {
             repay()
         }
-     
     }
 
     return (
         <>
-            <div className="flex w-[450px] flex-col gap-2 font-bold p-3 bg-[#383838]  rounded-xl my-3">
+            <div className="flex min-w-[250px] flex-col gap-2 font-bold p-3 bg-[#383838]  rounded-xl my-3">
                                     
                 <h3 className="text-center"> {collateralSymbol} </h3>
 

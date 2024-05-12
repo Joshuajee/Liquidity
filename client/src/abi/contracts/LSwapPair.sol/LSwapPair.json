@@ -23,6 +23,11 @@
   },
   {
     "inputs": [],
+    "name": "AlreadyInitialized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "FailedInnerCall",
     "type": "error"
   },
