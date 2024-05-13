@@ -143,7 +143,12 @@ contract LFactory is ILFactory, Initialize {
 
 
     function repay(address borrower, address collateral, address tokenToBorrow, uint index, uint112 amount) public checkLoan(borrower, collateral) {
-        address ammPool = getPool(collateral, tokenToBorrow);
+        address ammPool;
+        if (isAmmPool[collateral]) {
+            ammPool = collateral;
+        } else {
+            ammPool = getPool(collateral, tokenToBorrow);
+        }
         LoanMarket storage loan = userLoans[borrower][collateral][index];
         //Dangerous casting
         uint112 interest = uint112(loan.accruedInterest + ((uint32(block.timestamp) - loan.borrowedAt) * loan.interestRate * loan.amount / YEAR));

@@ -143,7 +143,7 @@ describe("LSwapPair", function () {
 
       await MockERC20.write.transfer([LSwapPairPool.address, deposit_]) 
 
-      await LSwapPairPool.write.swap([0n, amountOut, account2.account.address])
+      await LSwapPairPool.write.swap([amountOut, 0n, account2.account.address])
 
       // should be equal to amount out after swap
       expect(await MockERC20_1.read.balanceOf([account2.account.address])).to.be.equal(amountOut)
