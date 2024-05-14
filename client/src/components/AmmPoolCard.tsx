@@ -57,6 +57,8 @@ const AmmPoolCard = ({ pool } : IProps) => {
         }
     }
 
+    const ratio = pool.reserve1 * 10000n / pool.reserve0
+
 
     return (
         <>  
@@ -69,7 +71,7 @@ const AmmPoolCard = ({ pool } : IProps) => {
                         {symbol1} / {symbol2}
                     </p>
 
-                    <p> 1 {symbol1} = {(Number(pool.reserve0 * 1000n / pool.reserve1)/1000).toString()} {symbol2}</p>
+                    <p className="ml-2"> 1 {symbol1} = {(Number(ratio) / 10000).toFixed(4)} {symbol2}</p>
 
                     <p className="flex grow"> </p>
 
@@ -94,7 +96,6 @@ const AmmPoolCard = ({ pool } : IProps) => {
                 </p>
 
             </div>
-
 
             <ModalWrapper open={open} close={() => setOpen(false)}>
                 <RemoveLiquidityModal pool={pool.pool} close={() => setOpen(false)} />
