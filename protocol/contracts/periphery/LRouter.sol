@@ -85,6 +85,7 @@ contract LRouter is ReentrancyGuard {
             if (pair == address(0)) {
                 pair = ILFactory(FACTORY).createPair(params.tokenA, params.tokenB);
                 pools.push(pair);
+                return (params.amountADesired, params.amountBDesired, pair);
             }   
 
             (reserveA, reserveB) = LV1Library.getReserves(pair, params.tokenA, params.tokenB);

@@ -8,7 +8,9 @@
     "test": "npx hardhat test",
     "move": "npx hardhat run ./scripts/time.ts --network localhost",
     "deploy:local": "npx hardhat ignition deploy ./ignition/modules/Liquidity.ts --network localhost",
-    "action:local": "npx hardhat ignition deploy ./ignition/modules/Operations.ts --network localhost"
+    "action:local": "npx hardhat ignition deploy ./ignition/modules/Operations.ts --network localhost",
+    "action:liskSepolia": "npx hardhat ignition deploy ./ignition/modules/Operations.ts --network liskSepolia"
+
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^0.15.0",

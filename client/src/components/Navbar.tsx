@@ -16,6 +16,8 @@ const Navbar = () => {
 
                 <Link to={"/borrow"}>Borrow</Link>
 
+                <Link to={"/faucet"}>Get Test Tokens</Link>
+
             </div>
 
             <div>

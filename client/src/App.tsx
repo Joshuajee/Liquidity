@@ -8,6 +8,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import BorrowMarketPage from "./pages/borrow-market-page";
 import LoanPage from "./pages/loan-page";
+import FaucetPage from "./pages/faucet-page";
 
 
 const App = () => {
@@ -23,6 +24,7 @@ const App = () => {
             <Route path="/borrow" element={<BorrowPage />} />
             <Route path="/borrow/:collateral/:token" element={<BorrowMarketPage />} />
             <Route path="/loans/:collateral" element={<LoanPage />} />
+            <Route path="/faucet" element={<FaucetPage />} />
           </Routes>
         </BrowserRouter>
         <ToastContainer theme="dark" />

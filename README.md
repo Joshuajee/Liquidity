@@ -30,3 +30,15 @@ This has provide an opportunity to create a DEFI protocol that is both an AMM an
 4. DEFI Enthusiasts: Contribute to a decentralized and community-driven protocol shaping the future of DEFI.
 
 Join the Liquidity community today and be part of a revolutionary DEFI project!
+
+
+
+
+- DAIModule#MockERC20 - 0x3adaCF4fd3429D9fa273EC3AeBc41A552755efa5
+- LSwapPairModule#LSwapPair - 0xacC3d06091e917E07a4624F2105d23D02567CdCD
+- TWBTCModule#MockERC20 - 0xCf3Ad432BC895A74D167Ec3F64eE0E6917f54Ca5
+- USDCModule#MockERC20 - 0x9f9d91d8fed9d1dAB6f03C2750B383C4ED1555db
+- USDTModule#MockERC20 - 0x6f550848C38fFA83eB832ee661A45318a4814f3c
+- LFactoryModule#LFactory - 0x8e2ccA81ffB9e4a7Bc801211549E1Cb26D68fE6A
+- LFactoryModule#LRouter - 0x32474d32c04fa606B660EE20f1203211C8487785
+- LFactoryModule#LSlidingWindowOracle - 0xF80Af2b1d9b1dd7c342aD9d1bd4E79531c181269
