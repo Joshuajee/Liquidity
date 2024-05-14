@@ -12,7 +12,6 @@ import {LCollateralPool} from "../LCollateralPool.sol";
 
 import {LV1Library} from "../liberies/LV1Library.sol";
 
-import "hardhat/console.sol";
 
 /**
  * @title LSwap V1 Router

@@ -10,7 +10,6 @@ import "./LSwapPair.sol";
 import "./LCollateralPool.sol";
 import {LSlidingWindowOracle} from  "./utils/LSlidingWindowOracle.sol";
 import {Initialize} from "./utils/Initialize.sol";
-import "hardhat/console.sol";
 
 
 contract LFactory is ILFactory, Initialize {
@@ -175,22 +174,22 @@ contract LFactory is ILFactory, Initialize {
 
 
     function liquidate(address borrower, address collateral, address tokenBorrowed, uint index) external {
+        //User should not be able to liquidate themselves, I will work on this
         if (!isLiquidatable(borrower, collateral)) revert("Healthy");
         address liquidator = msg.sender;
         uint amount = repayFull(borrower, collateral, tokenBorrowed, index);
         uint liquidatorFee = amount + (amount * ONE_PERCENT/DECIMAL);
         if (isAmmPool[collateral]) {
             (address tokenA,) = LSwapPair(collateral).getTokens(); 
-            if (tokenA == tokenBorrowed) {
-                // to work on
-            } else {
-                liquidatorFee = oracle.consult(tokenA, liquidatorFee, tokenBorrowed);
+            if (tokenA != tokenBorrowed) {
+                liquidatorFee = oracle.consult(tokenBorrowed, liquidatorFee, tokenA);
             }
+           LSwapPair(collateral).seizeTokens(borrower, liquidator, liquidatorFee); 
         } else {
-            liquidatorFee = oracle.consult(collateral, liquidatorFee, tokenBorrowed);
-            LCollateralPool(collateral).seizeTokens(borrower, liquidator, liquidatorFee); 
+            liquidatorFee = oracle.consult(tokenBorrowed, liquidatorFee, collateral);
+            address collateralPool = getCollateralPool(collateral);
+            LCollateralPool(collateralPool).seizeTokens(borrower, liquidator, liquidatorFee); 
         }
-
 
     }
 
@@ -242,16 +241,16 @@ contract LFactory is ILFactory, Initialize {
                     totalInterest += interest;
                     totalDebt += amount;
                 } else {
-                    totalInterest += oracle.consult(tokenA, interest, tokenBorrowed);
-                    totalDebt += oracle.consult(tokenA, amount, tokenBorrowed);
+                    totalInterest += oracle.consult(tokenBorrowed, interest, tokenA);
+                    totalDebt += oracle.consult(tokenBorrowed, amount, tokenA);
                 }
             }
             totalLTV = (totalDebt + totalInterest) * DECIMAL / LSwapPair(collateral).balanceOf(borrower);
         } else {
             for (uint i; i < loanCount; ++i) {
                 uint interest = _calculateInterest(loans[i]);
-                totalInterest += oracle.consult(collateral, interest, loans[i].tokenBorrowed);
-                totalDebt += oracle.consult(collateral, loans[i].amount, loans[i].tokenBorrowed);
+                totalInterest += oracle.consult(loans[i].tokenBorrowed, interest, collateral);
+                totalDebt += oracle.consult(loans[i].tokenBorrowed, loans[i].amount, collateral);
             }
             totalLTV = (totalDebt + totalInterest) * DECIMAL / LCollateralPool(getCollateralPool(collateral)).balanceOf(borrower);
         }

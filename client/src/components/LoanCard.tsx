@@ -30,7 +30,7 @@ const LoanCard = ({ loan, collateral, index, refetch } : IProps) => {
 
 
     const interest = useMemo(() => {
-        const timeDelta = BigInt(parseInt(String(Date.now() / 1000)) + 1000 - borrowedAt)
+        const timeDelta = BigInt(parseInt(String(Date.now() / 1000)) + 3600 - borrowedAt)
         const currentInterest = ((amount * timeDelta * BigInt(interestRate)) / BigInt(YEAR))
         return BigInt(accruedInterest + currentInterest) 
     }, [accruedInterest, amount, interestRate, borrowedAt])

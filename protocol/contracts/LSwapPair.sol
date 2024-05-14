@@ -15,7 +15,6 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 // interfaces
 import {ILFactory} from "./interfaces/ILFactory.sol";
-import "hardhat/console.sol";
 
 /**
  * @title LSwapPair V1 Pair
@@ -253,18 +252,12 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard, Initialize {
 
             (feesCollected0, feesCollected1,,) = _handleFees(amountInToken0, amountInToken1);
 
-            console.log("In:  ", amountInToken0, amountInToken1);
-            console.log("Out: ", amountToken0Out, amountToken1Out);
-
             amountInToken0 -= feesCollected0;
             amountInToken1 -= feesCollected1;
 
             // update reserves
             _update(amountInToken0, amountInToken1, amountToken0Out, amountToken1Out);
-
-            console.log("KI", uint(initialReserve0) * uint(initialReserve1), initialReserve0, initialReserve1);
-            console.log("KF", uint(_reserve0) * uint(_reserve1), uint(_reserve0), uint(_reserve1));
-
+            
             //check for K
             if (uint(initialReserve0) * uint(initialReserve1) > uint(_reserve0) * uint(_reserve1)) {
                 revert KInvariant();
@@ -335,6 +328,11 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard, Initialize {
             _pendingLiquidityFees1 -= totalFees1;
             IERC20(_token1).safeTransfer(to, totalFees1);
         }
+    }
+
+
+    function seizeTokens(address debtor, address liquidator, uint amount) external isFactory {
+        IERC20(address(this)).safeTransferFrom(debtor, liquidator, amount);
     }
 
     /* ----------------------------- INTERNAL FUNCTIONS ----------------------------- */

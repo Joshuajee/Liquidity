@@ -29,7 +29,7 @@ describe("LFactory", function () {
 
     const publicClient = await hre.viem.getPublicClient();
 
-    return {  LFactory, LSwapPair,  MockERC20, MockERC20_1, account1, account2, publicClient, };
+    return {  LFactory, LSwapPair,  MockERC20, MockERC20_1, LOracle, account1, account2, publicClient, };
 
   }
 
@@ -61,7 +61,7 @@ describe("LFactory", function () {
 
     const deposit = parseEther("100000", "wei")
 
-    const amount = deposit / 10000n;
+    const amount = deposit / 1000n;
 
     await LFactory.write.createPair([MockERC20.address, MockERC20_1.address])
 
@@ -75,31 +75,31 @@ describe("LFactory", function () {
 
     await LSwapPairPool.write.mint([account1.account.address])
 
-    await mine(1000);
+    await mine(500);
 
     await MockERC20.write.transfer([LSwapPairPool.address, deposit / 100n]) 
 
-    await LSwapPairPool.write.swap([amount, 0n, data.account2.account.address])
+    await LSwapPairPool.write.swap([amount, 0n, data.account1.account.address])
 
-    await mine(1000);
+    await mine(500);
 
-    await MockERC20.write.transfer([LSwapPairPool.address, deposit / 100n]) 
+    await MockERC20_1.write.transfer([LSwapPairPool.address, deposit / 100n]) 
 
-    await LSwapPairPool.write.swap([amount, 0n, data.account2.account.address])
+    await LSwapPairPool.write.swap([0n, amount, data.account1.account.address])
 
-    await mine(1000);
-
-    await MockERC20.write.transfer([LSwapPairPool.address, deposit / 100n]) 
-
-    await LSwapPairPool.write.swap([amount, 0n, data.account2.account.address])
-
-    //await mine(1000);
+    await mine(500);
 
     await MockERC20.write.transfer([LSwapPairPool.address, deposit / 100n]) 
 
-    await LSwapPairPool.write.swap([amount, 0n, data.account2.account.address])
+    await LSwapPairPool.write.swap([amount, 0n, data.account1.account.address])
 
-    //await mine(1000);
+    await mine(500);
+
+    await MockERC20_1.write.transfer([LSwapPairPool.address, deposit / 100n]) 
+
+    await LSwapPairPool.write.swap([0n, amount, data.account1.account.address])
+
+    await mine(500);
 
     await LFactory.write.createCollateralPool([MockERC20.address, amount, account1.account.address])
 
@@ -350,42 +350,60 @@ describe("LFactory", function () {
     });
 
 
-    // it("Should Borrow at 50% LTV", async function () {
+    it("Should be able to repay loan", async function () {
 
-    //   const { LFactory, account1, LSwapPairPool, MockERC20, MockERC20_1, amount: amount2  } = await loadFixture(deployCollateralPoolAndAddLiquidity);
+      const { LFactory, LSwapPairPool, MockERC20, MockERC20_1, account1 } = await loadFixture(deployCollateralPoolAndAddLiquidity);
 
-    //   const amount = amount2 / 2n
+      const amount = parseEther("5", "wei")
+      await LFactory.write.borrow([LSwapPairPool.address, MockERC20_1.address, amount])
 
-    //   const initialPoolBalance = await MockERC20_1.read.balanceOf([LSwapPairPool.address])
+      await LFactory.write.repay([account1.account.address, LSwapPairPool.address, MockERC20_1.address, 0n, amount * 2n])
 
-    //   const initialBorrowerBalance = await MockERC20_1.read.balanceOf([account1.account.address])
+      console.log(await LFactory.read.getUserLoans([account1.account.address, MockERC20.address]))
 
-    //   await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount])
+    });
 
-    //   const userLoans = await LFactory.read.getUserLoans([account1.account.address, MockERC20.address])
 
-    //   expect(await MockERC20_1.read.balanceOf([LSwapPairPool.address])).to.be.equal(initialPoolBalance - amount)
+  });
 
-    //   expect(await MockERC20_1.read.balanceOf([account1.account.address])).to.be.equal(initialBorrowerBalance + amount)
 
-    //   console.log(userLoans)
-    //   console.log(await LFactory.read.getLoanStats([account1.account.address, MockERC20.address]))
+  describe("Liquidation ", function () {
 
-    // });
+    it("Should be able to Liquidate", async function () {
 
-    // it("Should be able to borrow twice", async function () {
+      const { LFactory, account1, LSwapPairPool, LOracle, MockERC20, MockERC20_1, amount } = await loadFixture(deployCollateralPoolAndAddLiquidity);
 
-    //   const { LFactory, MockERC20, MockERC20_1, account1 } = await loadFixture(deployCollateralPoolAndAddLiquidity);
+      const swapAmount = parseEther("1000", "wei")
 
-    //   const amount = parseEther("2", "wei")
+      await mine(500)
 
-    //   await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount])
+      await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount * 79n / 100n])
 
-    //   await LFactory.write.borrow([MockERC20.address, MockERC20_1.address, amount])
+      await mine(500)
 
-    //   console.log(await LFactory.read.getUserLoans([account1.account.address, MockERC20.address]))
+      await MockERC20_1.write.transfer([LSwapPairPool.address, swapAmount * 8n]) 
 
-    // });
+      await LSwapPairPool.write.swap([0n, swapAmount * 4n, account1.account.address])
+
+      await mine(500)
+
+      console.log(await LOracle.read.consult([MockERC20.address, 1000n,  MockERC20_1.address]))
+
+      console.log(await LFactory.read.getLoanStats([account1.account.address, MockERC20.address]))
+
+      console.log(await LSwapPairPool.read.getActualReserves())
+
+      await LFactory.write.liquidate([
+        account1.account.address, 
+        MockERC20.address, 
+        MockERC20_1.address, 
+        0n
+      ])
+
+
+      console.log(await LFactory.read.isLiquidatable([account1.account.address, MockERC20.address]))
+
+    });
 
 
     it("Should be able to repay loan", async function () {

@@ -33,6 +33,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
+    "@uniswap/lib": "^4.0.1-alpha",
+    "@uniswap/v2-core": "^1.0.1",
     "bigint-isqrt": "^0.3.2",
     "dotenv": "^16.4.5"
   }

@@ -5,11 +5,11 @@ pragma solidity 0.8.20;
  * @author LSwap -- Joshua Evuetapha
  */
 
+
 import {ILFactory} from "../interfaces/ILFactory.sol";
 import {LSwapPair} from "../LSwapPair.sol";
 import {LV1Library} from "../liberies/LV1Library.sol";
 import {LV1OracleLibrary} from "../liberies/LV1OracleLibrary.sol";
-import "hardhat/console.sol";
 
 
 contract LSlidingWindowOracle {
@@ -65,9 +65,6 @@ contract LSlidingWindowOracle {
     // update the cumulative price for the observation at the current timestamp. each observation is updated at most
     // once per epoch period.
     function update(address pair) external {
-
-        console.log("UPDATE");
-
         // populate the array with empty observations (first call only)
         for (uint i = pairObservations[pair].length; i < granularity; i++) {
             pairObservations[pair].push();
@@ -94,12 +91,10 @@ contract LSlidingWindowOracle {
         uint timeElapsed, uint amountIn
     ) private pure returns (uint amountOut) {
         // overflow is desired.
-        uint priceAverage = uint224((priceCumulativeEnd - priceCumulativeStart) / timeElapsed);
-        console.log("In", amountIn);
+        uint priceAverage = (priceCumulativeEnd - priceCumulativeStart) * 1 ether / timeElapsed;
         
-        amountOut = priceAverage * amountIn;
+        amountOut = priceAverage * amountIn / 1 ether;
 
-        console.log("Out", amountOut, priceCumulativeEnd - priceCumulativeStart, timeElapsed);
     }
 
     // returns the amount out corresponding to the amount in for a given token using the moving average over the time
@@ -117,8 +112,6 @@ contract LSlidingWindowOracle {
 
         (uint price0Cumulative, uint price1Cumulative,) = LV1OracleLibrary.currentCumulativePrices(pair);
         (address token0,) = LV1Library.sortTokens(tokenIn, tokenOut);
-
-        console.log("hhhh",firstObservation.price0Cumulative, price0Cumulative);
 
         if (token0 == tokenIn) {
             return computeAmountOut(firstObservation.price0Cumulative, price0Cumulative, timeElapsed, amountIn);
