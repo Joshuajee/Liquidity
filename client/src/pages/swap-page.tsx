@@ -83,6 +83,7 @@ const SwapPage = () => {
             await walletClient.writeContract(request)
             setValueA("")
             setValueB("")
+            toast.success("Swap is successful")
         } catch (e) {
             toast.error((e as any)?.shortMessage)
             console.error(e)
