@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { toast } from "react-toastify";
 import { useAccount } from "wagmi";
 
 interface IProps {
@@ -12,6 +13,7 @@ const Web3Btn = ({ children, loading, onClick } : IProps) => {
     const { isConnected } = useAccount()
 
     const handleClick = () => {
+        if (!isConnected) return toast.error("Please connect wallet")
 
         onClick()
         

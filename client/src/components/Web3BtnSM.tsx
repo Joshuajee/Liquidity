@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { toast } from "react-toastify";
 import { useAccount } from "wagmi";
 
 interface IProps {
@@ -13,6 +14,8 @@ const Web3BtnSM = ({ children, loading, onClick } : IProps) => {
 
     const handleClick = () => {
 
+        if (!isConnected) return toast.error("Please connect wallet")
+
         onClick()
         
     }
@@ -25,7 +28,7 @@ const Web3BtnSM = ({ children, loading, onClick } : IProps) => {
 
     return (
         <button onClick={handleClick} className="rounded-xl py-2 px-4 w-full bg-green-700">
-            { isConnected ? children : "Please Connect Wallet"}
+            { children }
         </button>
     )
 }
