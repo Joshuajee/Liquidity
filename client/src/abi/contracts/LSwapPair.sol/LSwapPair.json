@@ -28,6 +28,11 @@
   },
   {
     "inputs": [],
+    "name": "CannotRemoveLiquidity",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "FailedInnerCall",
     "type": "error"
   },

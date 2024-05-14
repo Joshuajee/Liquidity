@@ -219,7 +219,7 @@ contract LFactory is ILFactory, Initialize {
 
     }
 
-    function _calculateInterest(LoanMarket memory loan) internal returns (uint) {
+    function _calculateInterest(LoanMarket memory loan) internal view returns (uint) {
         return loan.accruedInterest + (((block.timestamp - loan.borrowedAt) * loan.interestRate * loan.amount) / YEAR);
     }
 
@@ -228,7 +228,7 @@ contract LFactory is ILFactory, Initialize {
     }
 
 
-    function getLoanStats(address borrower, address collateral) public returns (uint totalLTV, uint totalDebt, uint totalInterest, uint8 loanCount) {
+    function getLoanStats(address borrower, address collateral) public view returns (uint totalLTV, uint totalDebt, uint totalInterest, uint8 loanCount) {
         LoanMarket [] memory loans = userLoans[borrower][collateral];
         loanCount = uint8(loans.length);
         if (isAmmPool[collateral]) {
@@ -257,7 +257,7 @@ contract LFactory is ILFactory, Initialize {
     }
 
 
-    function isLiquidatable (address borrower, address collateral) public returns(bool) {
+    function isLiquidatable (address borrower, address collateral) public view returns(bool) {
        (uint totalLTV,,,) = getLoanStats(borrower, collateral);
        return totalLTV >= MAX_LTV;
     }

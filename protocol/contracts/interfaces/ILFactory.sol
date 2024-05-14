@@ -13,6 +13,7 @@ interface ILFactory {
         uint32 borrowedAt;
     }
 
+    function isLiquidatable (address borrower, address collateral) external view returns(bool);
     function getPool(address _token0, address _token1) external view returns (address);
     function createPair(address _token0, address _token1) external returns (address pair);
     function createCollateralPool(IERC20 _token, uint assets, address receiver) external returns (address pool);

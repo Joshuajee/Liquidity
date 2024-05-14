@@ -39,7 +39,6 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard, Initialize {
     using SafeCast for *;
 
     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
-    address public FACTORY;
 
     //reserves
     uint112 private _reserve0;
@@ -257,7 +256,7 @@ contract LSwapPair is LSwapERC20, ReentrancyGuard, Initialize {
 
             // update reserves
             _update(amountInToken0, amountInToken1, amountToken0Out, amountToken1Out);
-            
+
             //check for K
             if (uint(initialReserve0) * uint(initialReserve1) > uint(_reserve0) * uint(_reserve1)) {
                 revert KInvariant();

@@ -6,7 +6,16 @@ pragma solidity 0.8.20;
  * @author LSwap -- Joshua Evuetapha
  */
 
+
+// interfaces
+import {ILFactory} from "../interfaces/ILFactory.sol";
+
 abstract contract LSwapERC20 {
+
+    error CannotRemoveLiquidity();
+
+    address public FACTORY;
+
     // Token metadata
     uint256 private constant _TWO_DAYS = 2 days;
 
@@ -67,6 +76,8 @@ abstract contract LSwapERC20 {
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
         _transfer(msg.sender, _to, _value);
+        bool isLiquidatable = ILFactory(FACTORY).isLiquidatable(msg.sender, address(this));
+        if (isLiquidatable) revert CannotRemoveLiquidity();
         return true;
     }
 
@@ -75,6 +86,8 @@ abstract contract LSwapERC20 {
             _allowances[_from][msg.sender] -= _value;
         }
         _transfer(_from, _to, _value);
+        bool isLiquidatable = ILFactory(FACTORY).isLiquidatable(_from, address(this));
+        if (isLiquidatable) revert CannotRemoveLiquidity();
         return true;
     }
 

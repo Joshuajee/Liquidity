@@ -43,6 +43,11 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "CannotRemoveLiquidity",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
